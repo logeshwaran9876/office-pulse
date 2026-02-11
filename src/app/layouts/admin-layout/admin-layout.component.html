@@ -1,0 +1,17 @@
+<div class="min-vh-100 bg-light">
+  <!-- Navbar -->
+  <app-navbar (toggleSidebar)="toggleSidebar()"></app-navbar>
+
+  <div class="d-flex">
+    <!-- Sidebar -->
+    <app-sidebar [isCollapsed]="isSidebarCollapsed"></app-sidebar>
+
+    <!-- Main Content -->
+    <main
+      class="flex-grow-1 p-4 transition-all"
+      [style.marginLeft.px]="isSidebarCollapsed ? 80 : 280"
+    >
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

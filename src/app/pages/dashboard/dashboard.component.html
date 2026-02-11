@@ -1,0 +1,297 @@
+<div class="container-fluid px-4 py-4">
+  <!-- Welcome Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+          <h1 class="h2 mb-1 fw-bold">Dashboard</h1>
+          <p class="text-muted mb-0">Welcome back, manage your office post!</p>
+        </div>
+        <div class="mt-2 mt-sm-0">
+          <span class="badge bg-light text-dark p-3">
+            <i class="bi bi-calendar3 me-2"></i>{{ currentDate | date:'fullDate' }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                <i class="bi bi-people fs-4 text-primary"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="text-muted mb-1">Total Employees</h6>
+              <h3 class="mb-0 fw-bold">{{ stats.totalEmployees }}</h3>
+              <small class="text-success">
+                <i class="bi bi-arrow-up"></i> 12% from last month
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                <i class="bi bi-calendar-check fs-4 text-success"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="text-muted mb-1">Active Events</h6>
+              <h3 class="mb-0 fw-bold">{{ stats.totalEvents }}</h3>
+              <small class="text-warning">
+                <i class="bi bi-clock"></i> 2 starting this week
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="rounded-circle bg-info bg-opacity-10 p-3">
+                <i class="bi bi-megaphone fs-4 text-info"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="text-muted mb-1">Announcements</h6>
+              <h3 class="mb-0 fw-bold">{{ stats.totalAnnouncements }}</h3>
+              <small class="text-danger">
+                <i class="bi bi-envelope"></i> 1 unread
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                <i class="bi bi-building fs-4 text-warning"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="text-muted mb-1">Departments</h6>
+              <h3 class="mb-0 fw-bold">{{ stats.totalDepartments }}</h3>
+              <small class="text-success">All active</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Recent Announcements -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0 fw-bold">
+              <i class="bi bi-megaphone me-2 text-primary"></i>Recent Announcements
+            </h5>
+            <a href="#" class="text-decoration-none small">View All</a>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <div class="list-group list-group-flush">
+            <div
+              class="list-group-item px-0 border-0 mb-3"
+              *ngFor="let item of announcements"
+            >
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center mb-1">
+                    <span class="badge {{ item.tagClass }} me-2">{{ item.tag }}</span>
+                    <small class="text-muted">
+                      <i class="bi bi-calendar3 me-1"></i>{{ item.date | date: 'MMM d' }}
+                    </small>
+                  </div>
+                  <h6 class="mb-1 fw-semibold">{{ item.title }}</h6>
+                  <p class="text-muted small mb-0">{{ item.description }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions & Upcoming Events -->
+    <div class="col-lg-5">
+      <div class="row g-4">
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+              <h5 class="card-title mb-0 fw-bold">
+                <i class="bi bi-lightning-charge me-2 text-primary"></i>Quick Actions
+              </h5>
+            </div>
+            <div class="card-body p-4">
+              <div class="row g-3">
+                <div class="col-6">
+                  <a routerLink="/employees" class="text-decoration-none">
+                    <div class="p-3 border rounded-3 text-center hover-effect">
+                      <div class="rounded-circle bg-primary bg-opacity-10 p-3 mx-auto mb-2" style="width: fit-content;">
+                        <i class="bi bi-person-plus fs-4 text-primary"></i>
+                      </div>
+                      <h6 class="mb-0 small fw-semibold">Add Employee</h6>
+                    </div>
+                  </a>
+                </div>
+                <div class="col-6">
+                  <a href="#" class="text-decoration-none">
+                    <div class="p-3 border rounded-3 text-center hover-effect">
+                      <div class="rounded-circle bg-success bg-opacity-10 p-3 mx-auto mb-2" style="width: fit-content;">
+                        <i class="bi bi-megaphone fs-4 text-success"></i>
+                      </div>
+                      <h6 class="mb-0 small fw-semibold">Announcement</h6>
+                    </div>
+                  </a>
+                </div>
+                <div class="col-6">
+                  <a href="#" class="text-decoration-none">
+                    <div class="p-3 border rounded-3 text-center hover-effect">
+                      <div class="rounded-circle bg-info bg-opacity-10 p-3 mx-auto mb-2" style="width: fit-content;">
+                        <i class="bi bi-calendar fs-4 text-info"></i>
+                      </div>
+                      <h6 class="mb-0 small fw-semibold">View Calendar</h6>
+                    </div>
+                  </a>
+                </div>
+                <div class="col-6">
+                  <a href="#" class="text-decoration-none">
+                    <div class="p-3 border rounded-3 text-center hover-effect">
+                      <div class="rounded-circle bg-warning bg-opacity-10 p-3 mx-auto mb-2" style="width: fit-content;">
+                        <i class="bi bi-file-earmark-spreadsheet fs-4 text-warning"></i>
+                      </div>
+                      <h6 class="mb-0 small fw-semibold">Export Report</h6>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold">
+                  <i class="bi bi-calendar-event me-2 text-primary"></i>Upcoming Events
+                </h5>
+                <a href="#" class="text-decoration-none small">View All</a>
+              </div>
+            </div>
+            <div class="card-body p-4">
+              <div
+                class="d-flex align-items-center mb-3 pb-2 border-bottom"
+                *ngFor="let event of upcomingEvents"
+              >
+                <div class="flex-shrink-0">
+                  <div class="bg-light rounded-3 p-2 text-center" style="width: 50px;">
+                    <span class="fw-bold d-block">{{ event.date | date: 'dd' }}</span>
+                    <small class="text-muted">{{ event.date | date: 'MMM' }}</small>
+                  </div>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                  <h6 class="mb-1 fw-semibold">{{ event.name }}</h6>
+                  <small class="text-muted">
+                    <i class="bi bi-clock me-1"></i>{{ event.time }}
+                    <i class="bi bi-people ms-2 me-1"></i>{{ event.attendees }} attendees
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Employees -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0 fw-bold">
+              <i class="bi bi-people me-2 text-primary"></i>Employee Management
+            </h5>
+            <a routerLink="/employees" class="btn btn-primary btn-sm">
+              <i class="bi bi-plus-lg me-1"></i>Add Employee
+            </a>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Employee</th>
+                  <th>Department</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let emp of recentEmployees">
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div
+                        class="rounded-circle bg-gradient-primary d-flex align-items-center justify-content-center me-2"
+                        style="width: 40px; height: 40px;"
+                      >
+                        <span class="text-white fw-semibold">{{ emp.name.charAt(0) }}</span>
+                      </div>
+                      <div>
+                        <span class="fw-semibold d-block">{{ emp.name }}</span>
+                        <small class="text-muted">{{ emp.email }}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ emp.department }}</td>
+                  <td>{{ emp.role }}</td>
+                  <td>
+                    <span class="badge {{ emp.status === 'Active' ? 'bg-success' : 'bg-secondary' }}">
+                      {{ emp.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary me-2">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

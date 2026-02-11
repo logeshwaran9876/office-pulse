@@ -1,0 +1,325 @@
+<div class="container-fluid px-4 py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+          <h1 class="h2 mb-1 fw-bold">Employee Management</h1>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item"><a routerLink="/dashboard" class="text-decoration-none">Dashboard</a></li>
+              <li class="breadcrumb-item active">Employees</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="mt-2 mt-sm-0">
+          <button class="btn btn-primary" (click)="openAddModal(addEmployeeModal)">
+            <i class="bi bi-plus-lg me-2"></i>Add Employee
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <!-- Search -->
+            <div class="col-lg-5">
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0">
+                  <i class="bi bi-search"></i>
+                </span>
+                <input type="text" 
+                       class="form-control border-start-0 ps-0" 
+                       placeholder="Search by name, email or ID..."
+                       (input)="onSearch($event)"
+                       [value]="searchTerm">
+              </div>
+            </div>
+            
+            <!-- Role Filter -->
+            <div class="col-lg-3">
+              <div class="dropdown" ngbDropdown>
+                <button class="btn btn-outline-secondary w-100 text-start d-flex justify-content-between align-items-center" 
+                        ngbDropdownToggle>
+                  <span>
+                    <i class="bi bi-person-badge me-2"></i>
+                    {{ selectedRole || 'All Roles' }}
+                  </span>
+                </button>
+                <div class="dropdown-menu w-100">
+                  <button class="dropdown-item" (click)="filterByRole('')">
+                    <i class="bi bi-asterisk me-2"></i>All Roles
+                  </button>
+                  <div class="dropdown-divider"></div>
+                  <button
+                    class="dropdown-item"
+                    *ngFor="let role of roles"
+                    (click)="filterByRole(role)"
+                  >
+                    <i class="bi bi-tag me-2"></i>{{ role }}
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Status Filter -->
+            <div class="col-lg-3">
+              <div class="btn-group w-100">
+                <button class="btn" 
+                        [class.btn-primary]="selectedStatus === 'Active'"
+                        [class.btn-outline-secondary]="selectedStatus !== 'Active'"
+                        (click)="filterByStatus('Active')">
+                  <i class="bi bi-check-circle me-2"></i>Active
+                </button>
+                <button class="btn" 
+                        [class.btn-primary]="selectedStatus === 'Inactive'"
+                        [class.btn-outline-secondary]="selectedStatus !== 'Inactive'"
+                        (click)="filterByStatus('Inactive')">
+                  <i class="bi bi-x-circle me-2"></i>Inactive
+                </button>
+              </div>
+            </div>
+            
+            <!-- Clear Filters -->
+            <div class="col-lg-1">
+              <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+                <i class="bi bi-arrow-repeat"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Employees Table -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="bg-light">
+                <tr>
+                  <th class="px-4 py-3">Employee</th>
+                  <th class="py-3">Employee ID</th>
+                  <th class="py-3">Department</th>
+                  <th class="py-3">Role</th>
+                  <th class="py-3">Date Joined</th>
+                  <th class="py-3">Status</th>
+                  <th class="py-3 text-end px-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let emp of paginatedEmployees">
+                  <td class="px-4">
+                    <div class="d-flex align-items-center">
+                      <div
+                        class="rounded-circle bg-gradient-primary d-flex align-items-center justify-content-center me-3"
+                        style="width: 45px; height: 45px;"
+                      >
+                        <span class="text-white fw-bold">{{ emp.name.charAt(0) }}</span>
+                      </div>
+                      <div>
+                        <span class="fw-semibold d-block">{{ emp.name }}</span>
+                        <small class="text-muted">{{ emp.email }}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge bg-light text-dark">{{ emp.employeeId }}</span>
+                  </td>
+                  <td>{{ emp.department }}</td>
+                  <td>
+                    <span class="badge bg-info bg-opacity-10 text-info">
+                      {{ emp.role }}
+                    </span>
+                  </td>
+                  <td>
+                    <i class="bi bi-calendar3 me-2 text-muted"></i>
+                    {{ emp.dateJoined | date: 'MMM d, y' }}
+                  </td>
+                  <td>
+                    <span
+                      class="badge {{ emp.status === 'Active' ? 'bg-success' : 'bg-secondary' }} px-3 py-2"
+                    >
+                      {{ emp.status }}
+                    </span>
+                  </td>
+                  <td class="text-end px-4">
+                    <button
+                      class="btn btn-sm btn-outline-primary me-2"
+                      (click)="openEditModal(editEmployeeModal, emp)"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="openDeleteModal(deleteConfirmModal, emp)"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="paginatedEmployees.length === 0">
+                  <td colspan="7" class="text-center py-5">
+                    <div class="my-5">
+                      <i class="bi bi-people fs-1 text-muted"></i>
+                      <h5 class="mt-3 mb-2">No employees found</h5>
+                      <p class="text-muted mb-3">Try adjusting your search or filters</p>
+                      <button class="btn btn-primary" (click)="clearFilters()">
+                        <i class="bi bi-arrow-repeat me-2"></i>Clear Filters
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Pagination -->
+          <div
+            *ngIf="filteredEmployees.length > pageSize"
+            class="d-flex justify-content-between align-items-center p-4 border-top"
+          >
+            <div class="text-muted small">
+              Showing {{ ((currentPage - 1) * pageSize) + 1 }} to
+              {{ currentPage * pageSize > totalItems ? totalItems : currentPage * pageSize }}
+              of {{ totalItems }} entries
+            </div>
+            <ngb-pagination
+              [(page)]="currentPage"
+              [pageSize]="pageSize"
+              [collectionSize]="totalItems"
+              [maxSize]="5"
+              [rotate]="true"
+              [boundaryLinks]="true"
+              class="mb-0"
+            >
+            </ngb-pagination>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Employee Modal -->
+<ng-template #addEmployeeModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <i class="bi {{ isEditMode ? 'bi-pencil-square' : 'bi-person-plus' }} me-2 text-primary"></i>
+      {{ isEditMode ? 'Edit Employee' : 'Add New Employee' }}
+    </h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Full Name</label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="name"
+            [class.is-invalid]="employeeForm.get('name')?.invalid && employeeForm.get('name')?.touched"
+          />
+          <div
+            class="invalid-feedback"
+            *ngIf="employeeForm.get('name')?.invalid && employeeForm.get('name')?.touched"
+          >
+            Name is required
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Email Address</label>
+          <input
+            type="email"
+            class="form-control"
+            formControlName="email"
+            [class.is-invalid]="employeeForm.get('email')?.invalid && employeeForm.get('email')?.touched"
+          />
+          <div
+            class="invalid-feedback"
+            *ngIf="employeeForm.get('email')?.invalid && employeeForm.get('email')?.touched"
+          >
+            Valid email is required
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Department</label>
+          <input type="text" class="form-control" formControlName="department"
+                 [class.is-invalid]="employeeForm.get('department')?.invalid && employeeForm.get('department')?.touched">
+        </div>
+        
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Role</label>
+          <input type="text" class="form-control" formControlName="role"
+                 [class.is-invalid]="employeeForm.get('role')?.invalid && employeeForm.get('role')?.touched">
+        </div>
+        
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Date Joined</label>
+          <input
+            type="date"
+            class="form-control"
+            formControlName="dateJoined"
+            [class.is-invalid]="employeeForm.get('dateJoined')?.invalid && employeeForm.get('dateJoined')?.touched"
+          />
+        </div>
+        
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Status</label>
+          <select class="form-select" formControlName="status">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">
+      <i class="bi bi-x-lg me-2"></i>Cancel
+    </button>
+    <button type="button" class="btn btn-primary" (click)="onSubmit()" [disabled]="employeeForm.invalid">
+      <i class="bi {{ isEditMode ? 'bi-check-lg' : 'bi-person-plus' }} me-2"></i>
+      {{ isEditMode ? 'Update Employee' : 'Add Employee' }}
+    </button>
+  </div>
+</ng-template>
+
+<!-- Edit Employee Modal (reuse same template) -->
+<ng-template #editEmployeeModal let-modal>
+  <!-- Same as add modal, just with different title -->
+  <ng-container *ngTemplateOutlet="addEmployeeModal; context: {$implicit: modal}"></ng-container>
+</ng-template>
+
+<!-- Delete Confirmation Modal -->
+<ng-template #deleteConfirmModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title text-danger">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Delete
+    </h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <p class="mb-0">Are you sure you want to delete <strong>{{ selectedEmployee?.name }}</strong>?</p>
+    <p class="text-muted small mt-2">This action cannot be undone.</p>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">
+      <i class="bi bi-x-lg me-2"></i>Cancel
+    </button>
+    <button type="button" class="btn btn-danger" (click)="deleteEmployee()">
+      <i class="bi bi-trash me-2"></i>Delete Employee
+    </button>
+  </div>
+</ng-template>
