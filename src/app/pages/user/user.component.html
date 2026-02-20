@@ -1,0 +1,1602 @@
+<div class="container-fluid p-0 min-vh-100 bg-dark">
+  <!-- Error State -->
+  <div
+    class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+    style="
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(10px);
+      z-index: 9999;
+    "
+    *ngIf="errorMessage"
+  >
+    <div class="card bg-dark border-0 shadow-lg" style="max-width: 450px">
+      <div class="card-body text-center p-5">
+        <div
+          class="bg-danger bg-opacity-10 rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center"
+          style="width: 80px; height: 80px"
+        >
+          <i class="bi bi-exclamation-triangle-fill text-danger fs-1"></i>
+        </div>
+        <h4 class="text-white fw-bold mb-3">Connection Error</h4>
+        <p class="text-white-50 mb-4">{{ errorMessage }}</p>
+        <button
+          class="btn btn-danger px-5 py-3 rounded-pill"
+          (click)="refreshEvents()"
+        >
+          <i class="bi bi-arrow-repeat me-2"></i> Retry Now
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div
+    class="position-fixed top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-black"
+    style="z-index: 9999"
+    *ngIf="isLoading && events.length === 0"
+  >
+    <div
+      class="spinner-border text-primary mb-4"
+      style="width: 4rem; height: 4rem"
+      role="status"
+    ></div>
+    <h5 class="text-white fw-semibold mb-2">Loading Events</h5>
+    <p class="text-white-50 small">
+      Please wait while we prepare your experience
+    </p>
+  </div>
+
+  <!-- Full Screen Slideshow -->
+  <div
+    class="position-relative vh-100 overflow-hidden"
+    *ngIf="!isLoading && events.length > 0 && !errorMessage"
+  >
+    <!-- Slides -->
+    <div
+      *ngFor="let event of events; let i = index"
+      class="position-absolute top-0 start-0 w-100 h-100"
+      [class.opacity-100]="i === currentSlideIndex"
+      [class.opacity-0]="i !== currentSlideIndex"
+      style="transition: opacity 0.8s ease-in-out"
+    >
+      <!-- Background Image -->
+      <div
+        class="position-absolute top-0 start-0 w-100 h-100"
+        [style.background-image]="'url(' + getFullImageUrl(event.theme) + ')'"
+        style="background-size: cover; background-position: center"
+      ></div>
+
+      <!-- Gradient Overlay - Using Bootstrap bg-dark with opacity -->
+      <div
+        class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"
+      ></div>
+      <div
+        class="position-absolute top-0 start-0 w-100 h-100"
+        style="
+          background: linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.8) 0%,
+            rgba(0, 0, 0, 0.2) 50%,
+            rgba(0, 0, 0, 0.8) 100%
+          );
+        "
+      ></div>
+
+      <!-- Content Layer -->
+      <div
+        class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column"
+      >
+        <!-- Top Section -->
+        <div class="container mt-5 pt-5">
+          <div class="row">
+            <div class="col-12">
+              <div class="d-flex justify-content-between align-items-start">
+                <!-- Event Badge -->
+                <span
+                  class="badge bg-dark bg-opacity-75 text-white px-4 py-3 rounded-pill d-inline-flex align-items-center gap-3 border border-white border-opacity-25"
+                >
+                  <i
+                    [class]="
+                      'bi ' + getEventTypeIcon(event.eventType) + ' fs-5'
+                    "
+                  ></i>
+                  <span class="fw-semibold text-uppercase">{{
+                    event.eventType
+                  }}</span>
+                  <span class="vr bg-white bg-opacity-50 mx-2"></span>
+                  <i class="bi bi-calendar3"></i>
+                  <span class="small">{{
+                    event.activeFrom | date: "MMM d, y"
+                  }}</span>
+                </span>
+
+                <!-- Live Badge -->
+                <span
+                  class="badge bg-danger d-flex align-items-center gap-2 px-4 py-3 rounded-pill shadow"
+                  *ngIf="isEventLive(event)"
+                >
+                  <span
+                    class="spinner-grow spinner-grow-sm text-white"
+                    role="status"
+                  ></span>
+                  <span class="fw-bold">LIVE</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center Section -->
+        <div class="container h-100 d-flex align-items-center">
+          <div class="row w-100">
+            <div class="col-lg-8 col-xl-7">
+              <!-- Event Title -->
+              <h1
+                class="display-1 fw-bold text-white mb-4"
+                style="
+                  font-size: clamp(3rem, 8vw, 5.5rem);
+                  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                "
+              >
+                {{ event.title }}
+              </h1>
+
+              <!-- Dynamic Event Templates -->
+              <div [ngSwitch]="event.eventType" class="mt-4">
+
+
+                <!-- LEAVE Template -->
+                <div *ngSwitchCase="'Leave'">
+                  <div class="row g-4">
+                    <!-- Top Row - Employee Card -->
+                    <div class="col-12">
+                      <div class="card bg-dark bg-opacity-75 border-0 rounded-4 overflow-hidden" style="backdrop-filter: blur(10px);">
+                        <div class="card-body p-4">
+                          <div class="row align-items-center">
+                            <div class="col-md-auto text-center text-md-start">
+                              <!-- Employee Avatar -->
+                           
+                            </div>
+                            <div class="col-md">
+                              <div class="text-center text-md-start mt-3 mt-md-0">
+                                <h3 class="text-white fw-bold mb-1">{{ getEmployeeName(event.employee) }}</h3>
+                                <p class="text-white-50 mb-2">{{ event.employee?.department }}</p>
+                                <span class="badge bg-info bg-opacity-25 text-info px-4 py-2 rounded-pill">
+                                  <i class="bi bi-umbrella-fill me-2"></i>
+                                  Leave of Absence
+                                </span>
+                              </div>
+                            </div>
+                            <div class="col-md-auto text-center text-md-end mt-3 mt-md-0">
+                              <span class="badge bg-warning bg-opacity-25 text-warning px-4 py-3 rounded-pill fs-6">
+                                <i class="bi bi-clock-history me-2"></i>
+                                {{ getTimeRemaining(event) }}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Middle Row - Two Column Cards -->
+                    <div class="col-md-6">
+                      <div class="card bg-dark bg-opacity-75 border-0 rounded-4 h-100" style="backdrop-filter: blur(10px);">
+                        <div class="card-body p-4">
+                          <h5 class="text-white fw-semibold mb-3">
+                            <i class="bi bi-info-circle-fill text-info me-2"></i>
+                            Leave Details
+                          </h5>
+                          <div class="d-flex flex-column gap-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                              <span class="text-white-50">Type</span>
+                              <span class="text-white fw-medium">{{ event.eventType }} Leave</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between">
+                              <span class="text-white-50">Duration</span>
+                              <span class="text-white fw-medium">{{ formatDate(event.activeFrom) }} - {{ formatDate(event.activeTo) }}</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between">
+                              <span class="text-white-50">Total Days</span>
+                              <span class="text-white fw-medium">7 days</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <div class="card bg-dark bg-opacity-75 border-0 rounded-4 h-100" style="backdrop-filter: blur(10px);">
+                        <div class="card-body p-4">
+                          <h5 class="text-white fw-semibold mb-3">
+                            <i class="bi bi-chat-dots-fill text-info me-2"></i>
+                            Description
+                          </h5>
+                          <p class="text-white-75 mb-0">
+                            {{ event.description || 'No description provided' }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Bottom Row - Status Bar -->
+                    <div class="col-12">
+                      <div class="card bg-dark bg-opacity-75 border-0 rounded-4" style="backdrop-filter: blur(10px);">
+                        <div class="card-body p-3">
+                          <div class="row align-items-center">
+                            <div class="col">
+                              <div class="d-flex align-items-center gap-3">
+                                <i class="bi bi-calendar-check text-info fs-5"></i>
+                                <span class="text-white-50">Requested on {{ formatDate(event.activeFrom) }}</span>
+                              </div>
+                            </div>
+                            <div class="col-auto">
+                              <span class="badge bg-warning bg-opacity-25 text-warning px-4 py-2 rounded-pill">
+                                <i class="bi bi-hourglass-split me-2"></i>
+                                Pending Approval
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- PLAYING Template -->
+                <div *ngSwitchCase="'Playtime'">
+                  <div class="row g-4">
+                    <!-- Left Column - Main Player Card -->
+                    <div class="col-lg-5">
+                      <div
+                        class="card bg-dark bg-opacity-75 border-0 rounded-4 overflow-hidden h-100"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <div class="card-body p-4 d-flex flex-column">
+                          <!-- Player Header -->
+                          <div class="d-flex align-items-center gap-3 mb-4">
+                            <div class="position-relative">
+                              <div
+                                class="rounded-circle overflow-hidden border border-2 border-primary"
+                                style="width: 80px; height: 80px"
+                              >
+                                <img
+                                  *ngIf="getEmployeePhoto(event.employee)"
+                                  [src]="getEmployeePhoto(event.employee)"
+                                  [alt]="getEmployeeName(event.employee)"
+                                  class="w-100 h-100 object-fit-cover"
+                                />
+                                <div
+                                  *ngIf="!getEmployeePhoto(event.employee)"
+                                  class="w-100 h-100 d-flex align-items-center justify-content-center bg-primary text-white fw-bold fs-2"
+                                >
+                                  {{ getEmployeeInitials(event.employee) }}
+                                </div>
+                              </div>
+                              <div class="position-absolute bottom-0 end-0">
+                                <div
+                                  class="bg-success rounded-circle p-2 border border-2 border-dark"
+                                ></div>
+                              </div>
+                            </div>
+                            <div>
+                              <h4 class="text-white fw-bold mb-1">
+                                {{ getEmployeeName(event.employee) }}
+                              </h4>
+                              <p class="text-white-50 small mb-0">
+                                {{ event.employee?.department }}
+                              </p>
+                            </div>
+                          </div>
+
+                          <!-- Game Info -->
+                          <div
+                            class="bg-white bg-opacity-5 rounded-3 p-4 text-center mb-4"
+                          >
+                            <div class="display-1 mb-3">🎮</div>
+                            <h3 class="text-white fw-bold mb-2">
+                              {{ event.title || "Game Session" }}
+                            </h3>
+                            <p class="text-white-50 mb-0">
+                              {{ event.description || "Join the game!" }}
+                            </p>
+                          </div>
+
+                          <!-- Stats Grid -->
+                          <div class="row g-3 mt-auto">
+                            <div class="col-4">
+                              <div
+                                class="bg-white bg-opacity-5 rounded-3 p-3 text-center"
+                              >
+                                <div class="text-warning fw-bold fs-4">24</div>
+                                <small class="text-white-50">Kills</small>
+                              </div>
+                            </div>
+                            <div class="col-4">
+                              <div
+                                class="bg-white bg-opacity-5 rounded-3 p-3 text-center"
+                              >
+                                <div class="text-info fw-bold fs-4">12</div>
+                                <small class="text-white-50">Deaths</small>
+                              </div>
+                            </div>
+                            <div class="col-4">
+                              <div
+                                class="bg-white bg-opacity-5 rounded-3 p-3 text-center"
+                              >
+                                <div class="text-success fw-bold fs-4">2.0</div>
+                                <small class="text-white-50">K/D</small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Right Column - Two Cards Stacked -->
+                    <div class="col-lg-7">
+                      <div class="row g-4">
+                        <!-- Top Right Card - Session Info -->
+                        <div class="col-12">
+                          <div
+                            class="card bg-dark bg-opacity-75 border-0 rounded-4"
+                            style="backdrop-filter: blur(10px)"
+                          >
+                            <div class="card-body p-4">
+                              <div class="d-flex align-items-center gap-4">
+                                <div
+                                  class="bg-primary bg-opacity-25 rounded-3 p-3"
+                                >
+                                  <i
+                                    class="bi bi-controller text-primary fs-2"
+                                  ></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                  <div
+                                    class="d-flex align-items-center gap-3 mb-2"
+                                  >
+                                    <span
+                                      class="badge bg-danger bg-opacity-25 text-danger px-3 py-2 rounded-pill"
+                                    >
+                                      <span
+                                        class="spinner-grow spinner-grow-sm me-2"
+                                        style="width: 8px; height: 8px"
+                                      ></span>
+                                      LIVE
+                                    </span>
+                                    <span class="text-white-50 small">
+                                      <i class="bi bi-clock me-1"></i>
+                                      {{ formatDate(event.activeFrom) }}
+                                    </span>
+                                  </div>
+                                  <div class="d-flex align-items-center gap-4">
+                                    <div>
+                                      <small class="text-white-50 d-block"
+                                        >Mode</small
+                                      >
+                                      <span class="text-white"
+                                        >Battle Royale</span
+                                      >
+                                    </div>
+                                    <div>
+                                      <small class="text-white-50 d-block"
+                                        >Map</small
+                                      >
+                                      <span class="text-white">New Island</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Bottom Right Card - Team/Achievements -->
+                        <div class="col-12">
+                          <div
+                            class="card bg-dark bg-opacity-75 border-0 rounded-4"
+                            style="backdrop-filter: blur(10px)"
+                          >
+                            <div class="card-body p-4">
+                              <div class="row g-4">
+                                <!-- Team Section -->
+                                <div class="col-md-6">
+                                  <h6 class="text-white fw-semibold mb-3">
+                                    <i
+                                      class="bi bi-people-fill text-primary me-2"
+                                    ></i>
+                                    Squad
+                                  </h6>
+                                  <div class="d-flex flex-column gap-2">
+                                    <div
+                                      class="d-flex align-items-center gap-2"
+                                      *ngFor="let i of [1, 2, 3]"
+                                    >
+                                      <div
+                                        class="rounded-circle bg-primary bg-opacity-25"
+                                        style="width: 32px; height: 32px"
+                                      ></div>
+                                      <span class="text-white small"
+                                        >Player {{ i }}</span
+                                      >
+                                      <span class="text-white-50 small ms-auto"
+                                        >Online</span
+                                      >
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <!-- Achievements Section -->
+                                <div class="col-md-6">
+                                  <h6 class="text-white fw-semibold mb-3">
+                                    <i
+                                      class="bi bi-trophy-fill text-warning me-2"
+                                    ></i>
+                                    Achievements
+                                  </h6>
+                                  <div class="d-flex gap-2 flex-wrap">
+                                    <div
+                                      class="bg-white bg-opacity-10 rounded-3 p-2 text-center"
+                                      style="width: 60px"
+                                    >
+                                      <i
+                                        class="bi bi-star-fill text-warning"
+                                      ></i>
+                                      <small class="text-white-50 d-block"
+                                        >Win</small
+                                      >
+                                    </div>
+                                    <div
+                                      class="bg-white bg-opacity-10 rounded-3 p-2 text-center"
+                                      style="width: 60px"
+                                    >
+                                      <i
+                                        class="bi bi-lightning-fill text-info"
+                                      ></i>
+                                      <small class="text-white-50 d-block"
+                                        >MVP</small
+                                      >
+                                    </div>
+                                    <div
+                                      class="bg-white bg-opacity-10 rounded-3 p-2 text-center"
+                                      style="width: 60px"
+                                    >
+                                      <i
+                                        class="bi bi-heart-fill text-danger"
+                                      ></i>
+                                      <small class="text-white-50 d-block"
+                                        >Streak</small
+                                      >
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="col-12">
+                          <div class="d-flex gap-3">
+                            <button
+                              class="btn btn-primary flex-fill rounded-pill py-3"
+                            >
+                              <i class="bi bi-play-fill me-2"></i>Play Now
+                            </button>
+                            <button
+                              class="btn btn-outline-primary flex-fill rounded-pill py-3"
+                            >
+                              <i class="bi bi-chat-dots me-2"></i>Chat
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- BIRTHDAY Template -->
+                <div *ngSwitchCase="'Birthday'">
+                  <div class="row g-4">
+                    <div class="col-md-7">
+                      <div
+                        class="card bg-dark bg-opacity-75 border-0 rounded-4 p-4"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                          <!-- Employee Avatar -->
+                          <div class="position-relative">
+                            <div
+                              class="rounded-circle overflow-hidden border border-2 border-warning"
+                              style="width: 60px; height: 60px"
+                            >
+                              <img
+                                *ngIf="getEmployeePhoto(event.employee)"
+                                [src]="getEmployeePhoto(event.employee)"
+                                [alt]="getEmployeeName(event.employee)"
+                                class="w-100 h-100 object-fit-cover"
+                              />
+                              <div
+                                *ngIf="!getEmployeePhoto(event.employee)"
+                                class="w-100 h-100 d-flex align-items-center justify-content-center bg-warning text-dark fw-bold fs-4"
+                              >
+                                {{ getEmployeeInitials(event.employee) }}
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <h5 class="text-white fw-bold mb-0">
+                              {{ getEmployeeName(event.employee) }}
+                            </h5>
+                            <p class="text-white-50 small mb-0">
+                              {{ event.employee?.department }}
+                            </p>
+                          </div>
+                        </div>
+                        <h4 class="text-white fw-bold mb-2">
+                          Happy Birthday! 🎂
+                        </h4>
+                        <p class="text-white-75 mb-0">
+                          Wishing you an amazing day filled with joy and
+                          surprises!
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col-md-5">
+                      <div
+                        class="card bg-dark bg-opacity-50 border-0 rounded-4 p-4 text-center"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <div class="display-1 text-warning mb-2">🎉</div>
+                        <h5 class="text-white mb-1">Celebrate!</h5>
+                        <p class="text-white-50 small">Join the party</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+        
+                <!-- WEDDING Template -->
+              <div *ngSwitchCase="'Wedding'">
+                <div class="row g-4">
+                  <!-- Left Column - Couple/Celebration Card -->
+                  <div class="col-lg-5">
+                    <div class="card bg-dark bg-opacity-75 border-0 rounded-4 overflow-hidden h-100" 
+                        style="backdrop-filter: blur(10px);">
+                      <div class="card-body p-5 d-flex flex-column">
+                        <!-- Celebration Icons -->
+                        <div class="d-flex justify-content-center gap-4 mb-5">
+                          <div class="bg-warning bg-opacity-25 rounded-circle p-3">
+                            <i class="bi bi-gem text-warning fs-2"></i>
+                          </div>
+                          <div class="bg-danger bg-opacity-25 rounded-circle p-3">
+                            <i class="bi bi-heart-fill text-danger fs-2"></i>
+                          </div>
+                          <div class="bg-warning bg-opacity-25 rounded-circle p-3">
+                            <i class="bi bi-gem text-warning fs-2"></i>
+                          </div>
+                        </div>
+
+                        <!-- Main Message -->
+                        <h2 class="text-white fw-bold text-center mb-3">Just Married!</h2>
+                        <div class="bg-white bg-opacity-5 rounded-4 p-4 mb-4">
+                          <p class="text-white-75 text-center mb-0 fst-italic">
+                            "Two hearts, one love, forever united"
+                          </p>
+                        </div>
+
+                        <!-- Date Badge -->
+                        <div class="text-center mt-auto">
+                          <span class="badge bg-warning bg-opacity-25 text-warning px-4 py-3 rounded-pill fs-6">
+                            <i class="bi bi-calendar-heart-fill me-2"></i>
+                            {{ formatDate(event.activeFrom) }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Right Column - Employee/Bride-Groom Info -->
+                  <div class="col-lg-7">
+                    <div class="row g-4">
+                      <!-- Main Employee Card -->
+                      <div class="col-12">
+                        <div class="card bg-dark bg-opacity-75 border-0 rounded-4" style="backdrop-filter: blur(10px);">
+                          <div class="card-body p-4">
+                            <div class="row align-items-center">
+                              <div class="col-md-auto text-center text-md-start">
+                                <!-- Employee Avatar -->
+                                <div class="rounded-circle overflow-hidden border border-3 border-warning mx-auto mx-md-0" 
+                                    style="width: 120px; height: 120px;">
+                                  <img *ngIf="getEmployeePhoto(event.employee)" 
+                                      [src]="getEmployeePhoto(event.employee)" 
+                                      [alt]="getEmployeeName(event.employee)" 
+                                      class="w-100 h-100 object-fit-cover">
+                                  <div *ngIf="!getEmployeePhoto(event.employee)" 
+                                      class="w-100 h-100 d-flex align-items-center justify-content-center bg-warning text-dark fw-bold fs-1">
+                                    {{ getEmployeeInitials(event.employee) }}
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="col-md">
+                                <div class="text-center text-md-start mt-3 mt-md-0">
+                                  <span class="badge bg-warning bg-opacity-25 text-warning px-3 py-2 rounded-pill mb-2">
+                                    <i class="bi bi-star-fill me-2"></i>The Happy Couple
+                                  </span>
+                                  <h3 class="text-white fw-bold mb-1">{{ getEmployeeName(event.employee) }}</h3>
+                                  <p class="text-white-50 mb-2">{{ event.employee?.department }}</p>
+                                  <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-2">
+                                    <i class="bi bi-envelope-fill text-warning small"></i>
+                                    <span class="text-white-50 small">{{ event.employee?.email }}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Wedding Details Grid -->
+                      <div class="col-md-6">
+                        <div class="card bg-dark bg-opacity-75 border-0 rounded-4 h-100" style="backdrop-filter: blur(10px);">
+                          <div class="card-body p-4">
+                            <h5 class="text-white fw-semibold mb-3">
+                              <i class="bi bi-calendar-check text-warning me-2"></i>
+                              Ceremony
+                            </h5>
+                            <div class="d-flex flex-column gap-3">
+                              <div>
+                                <small class="text-white-50 d-block">Date & Time</small>
+                                <span class="text-white">{{ formatDate(event.activeFrom) }} • {{ event.activeFrom | date:'h:mm a' }}</span>
+                              </div>
+                              <div>
+                                <small class="text-white-50 d-block">Venue</small>
+                                <span class="text-white">Grand Garden Hall</span>
+                              </div>
+                              <div>
+                                <small class="text-white-50 d-block">Reception</small>
+                                <span class="text-white">To follow at Main Ballroom</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <div class="card bg-dark bg-opacity-75 border-0 rounded-4 h-100" style="backdrop-filter: blur(10px);">
+                          <div class="card-body p-4">
+                            <h5 class="text-white fw-semibold mb-3">
+                              <i class="bi bi-gift-fill text-warning me-2"></i>
+                              Celebration
+                            </h5>
+                            <div class="d-flex flex-column gap-3">
+                              <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-music-note-beamed text-warning"></i>
+                                <span class="text-white">Live Band Performance</span>
+                              </div>
+                              <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-cake2 text-warning"></i>
+                                <span class="text-white">Wedding Cake Ceremony</span>
+                              </div>
+                              <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-camera text-warning"></i>
+                                <span class="text-white">Photo Session</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- RSVP Button -->
+                      <div class="col-12">
+                        <div class="card bg-dark bg-opacity-75 border-0 rounded-4" style="backdrop-filter: blur(10px);">
+                          <div class="card-body p-3">
+                            <div class="row align-items-center">
+                              <div class="col">
+                                <span class="text-white-50">
+                                  <i class="bi bi-envelope-paper-heart-fill text-warning me-2"></i>
+                                  You're invited to celebrate
+                                </span>
+                              </div>
+                              <div class="col-auto">
+                                <button class="btn btn-warning rounded-pill px-4">
+                                  <i class="bi bi-check-circle me-2"></i>
+                                  RSVP Now
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+                <!-- ANNIVERSARY Template -->
+                <div *ngSwitchCase="'Anniversary'">
+                  <div class="row justify-content-center">
+                    <div class="col-lg-8 text-center">
+                      <div
+                        class="card bg-dark bg-opacity-75 border-0 rounded-4 p-5"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <i
+                          class="bi bi-award-fill text-warning display-1 mb-3"
+                        ></i>
+
+                        <!-- Employee Avatar -->
+                        <div
+                          class="rounded-circle overflow-hidden border border-3 border-primary mx-auto mb-3"
+                          style="width: 100px; height: 100px"
+                        >
+                          <img
+                            *ngIf="getEmployeePhoto(event.employee)"
+                            [src]="getEmployeePhoto(event.employee)"
+                            [alt]="getEmployeeName(event.employee)"
+                            class="w-100 h-100 object-fit-cover"
+                          />
+                          <div
+                            *ngIf="!getEmployeePhoto(event.employee)"
+                            class="w-100 h-100 d-flex align-items-center justify-content-center bg-primary text-white fw-bold fs-2"
+                          >
+                            {{ getEmployeeInitials(event.employee) }}
+                          </div>
+                        </div>
+
+                        <h3 class="text-white fw-bold mb-2">
+                          {{ getEmployeeName(event.employee) }}
+                        </h3>
+                        <p class="text-white-50 mb-4">
+                          {{ event.employee?.department }}
+                        </p>
+                        <div class="bg-primary bg-opacity-25 rounded-3 p-3">
+                          <p class="text-white fs-4 mb-0">
+                            Celebrating Years of Excellence
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- CONFERENCE Template -->
+                <div *ngSwitchCase="'Conference'">
+                  <div class="row g-4">
+                    <div class="col-md-7">
+                      <div
+                        class="card bg-dark bg-opacity-75 border-0 rounded-4 p-4"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <span
+                          class="badge bg-primary bg-opacity-25 text-white px-3 py-2 rounded-pill mb-3 w-auto"
+                        >
+                          <i class="bi bi-mic me-2"></i>Keynote Speaker
+                        </span>
+                        <h3 class="text-white fw-bold mb-2">
+                          {{ getEmployeeName(event.employee) }}
+                        </h3>
+                        <p class="text-white-50 mb-3">
+                          {{ event.employee?.department }}
+                        </p>
+                        <div
+                          class="d-flex align-items-center gap-2 text-white-75"
+                        >
+                          <i class="bi bi-clock text-primary"></i>
+                          <span
+                            >{{ event.activeFrom | date: "h:mm a" }} -
+                            {{ event.activeTo | date: "h:mm a" }}</span
+                          >
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-5">
+                      <div
+                        class="card bg-primary bg-opacity-25 border-0 rounded-4 p-4 h-100 d-flex align-items-center justify-content-center"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <i
+                          class="bi bi-easel2-fill text-white display-1 opacity-50"
+                        ></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- PARTY Template -->
+                <div *ngSwitchCase="'Party'">
+                  <div class="row g-4">
+                    <div class="col-md-5">
+                      <div
+                        class="card bg-warning bg-opacity-25 border-0 rounded-4 p-4 h-100 d-flex align-items-center justify-content-center"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <i
+                          class="bi bi-cup-straw text-white display-1 opacity-50"
+                        ></i>
+                      </div>
+                    </div>
+                    <div class="col-md-7">
+                      <div
+                        class="card bg-dark bg-opacity-75 border-0 rounded-4 p-4"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <span
+                          class="badge bg-warning bg-opacity-25 text-white px-3 py-2 rounded-pill mb-3 w-auto"
+                        >
+                          <i class="bi bi-star-fill me-2"></i>Party Time
+                        </span>
+                        <h3 class="text-white fw-bold mb-2">
+                          {{ getEmployeeName(event.employee) }}
+                        </h3>
+                        <p class="text-white-50 mb-3">
+                          {{ event.employee?.department }}
+                        </p>
+                        <div class="row g-2">
+                          <div class="col-6">
+                            <div
+                              class="bg-white bg-opacity-10 rounded-3 p-2 text-center"
+                            >
+                              <i
+                                class="bi bi-clock text-warning d-block fs-4 mb-1"
+                              ></i>
+                              <small class="text-white-50 d-block">Time</small>
+                              <span class="text-white small">{{
+                                event.activeFrom | date: "h:mm a"
+                              }}</span>
+                            </div>
+                          </div>
+                          <div class="col-6">
+                            <div
+                              class="bg-white bg-opacity-10 rounded-3 p-2 text-center"
+                            >
+                              <i
+                                class="bi bi-geo-alt-fill text-warning d-block fs-4 mb-1"
+                              ></i>
+                              <small class="text-white-50 d-block">Venue</small>
+                              <span class="text-white small">Main Hall</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- BEST PERFORMER Template -->
+                <div *ngSwitchCase="'BestPerformer'">
+                  <div class="row justify-content-center">
+                    <div class="col-lg-8 text-center">
+                      <div
+                        class="card bg-dark bg-opacity-75 border-0 rounded-4 p-5"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <i
+                          class="bi bi-trophy-fill text-warning display-1 mb-3"
+                        ></i>
+
+                        <!-- Employee Avatar -->
+                        <div
+                          class="rounded-circle overflow-hidden border border-3 border-warning mx-auto mb-3"
+                          style="width: 100px; height: 100px"
+                        >
+                          <img
+                            *ngIf="getEmployeePhoto(event.employee)"
+                            [src]="getEmployeePhoto(event.employee)"
+                            [alt]="getEmployeeName(event.employee)"
+                            class="w-100 h-100 object-fit-cover"
+                          />
+                          <div
+                            *ngIf="!getEmployeePhoto(event.employee)"
+                            class="w-100 h-100 d-flex align-items-center justify-content-center bg-warning text-dark fw-bold fs-2"
+                          >
+                            {{ getEmployeeInitials(event.employee) }}
+                          </div>
+                        </div>
+
+                        <h3 class="text-white fw-bold mb-2">
+                          {{ getEmployeeName(event.employee) }}
+                        </h3>
+                        <p class="text-white-50 mb-4">
+                          {{ event.employee?.department }}
+                        </p>
+                        <span
+                          class="badge bg-warning bg-opacity-25 text-white px-4 py-2 rounded-pill fs-5"
+                        >
+                          <i class="bi bi-crown me-2"></i>Best Performer
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- AWARD Template -->
+                <div *ngSwitchCase="'award'">
+                  <div class="row g-4">
+                    <!-- Left Column - Main Award Card -->
+                    <div class="col-lg-7">
+                      <div
+                        class="card bg-dark bg-opacity-75 border-0 rounded-4 overflow-hidden h-100"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <div class="card-body p-5 d-flex flex-column">
+                          <!-- Award Header with Icon -->
+                          <div class="text-center mb-4">
+                            <div
+                              class="bg-warning bg-opacity-25 rounded-circle d-inline-flex align-items-center justify-content-center p-4 mb-3"
+                              style="width: 100px; height: 100px"
+                            >
+                              <i
+                                class="bi bi-trophy-fill text-warning display-4"
+                              ></i>
+                            </div>
+                            <h2 class="text-white fw-bold mb-2">
+                              {{ event.title || "Award Ceremony" }}
+                            </h2>
+                            <p class="text-white-50 mb-0">
+                              {{
+                                event.description || "Celebrating excellence"
+                              }}
+                            </p>
+                          </div>
+
+                          <!-- Recipient Info -->
+                          <div class="bg-secondary bg-opacity-5 rounded-4 p-4 mb-4">
+                            <div class="d-flex align-items-center gap-4">
+                              <div
+                                class="rounded-circle overflow-hidden border border-3 border-warning"
+                                style="
+                                  width: 90px;
+                                  height: 90px;
+                                  flex-shrink: 0;
+                                "
+                              >
+                                <img
+                                  *ngIf="getEmployeePhoto(event.employee)"
+                                  [src]="getEmployeePhoto(event.employee)"
+                                  [alt]="getEmployeeName(event.employee)"
+                                  class="w-100 h-100 object-fit-cover"
+                                />
+                                <div
+                                  *ngIf="!getEmployeePhoto(event.employee)"
+                                  class="w-100 h-100 d-flex align-items-center justify-content-center bg-warning text-dark fw-bold fs-2"
+                                >
+                                  {{ getEmployeeInitials(event.employee) }}
+                                </div>
+                              </div>
+                              <div>
+                                <small
+                                  class="text-warning text-uppercase fw-semibold d-block mb-1"
+                                  >Recipient</small
+                                >
+                                <h3 class="text-white fw-bold mb-1">
+                                  {{ getEmployeeName(event.employee) }}
+                                </h3>
+                                <p class="text-white-50 mb-0">
+                                  {{ event.employee?.department }}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Award Stats -->
+                          <div class="row g-3 mt-auto">
+                            <div class="col-4">
+                              <div
+                                class="bg-white bg-opacity-5 rounded-3 p-3 text-center"
+                              >
+                                <i
+                                  class="bi bi-star-fill text-warning d-block fs-4 mb-1"
+                                ></i>
+                                <div class="text-white fw-bold">Gold</div>
+                                <small class="text-white-50">Category</small>
+                              </div>
+                            </div>
+                            <div class="col-4">
+                              <div
+                                class="bg-white bg-opacity-5 rounded-3 p-3 text-center"
+                              >
+                                <i
+                                  class="bi bi-calendar-check text-info d-block fs-4 mb-1"
+                                ></i>
+                                <div class="text-white fw-bold">
+                                  {{
+                                    formatDate(event.activeFrom) | date: "yyyy"
+                                  }}
+                                </div>
+                                <small class="text-white-50">Year</small>
+                              </div>
+                            </div>
+                            <div class="col-4">
+                              <div
+                                class="bg-white bg-opacity-5 rounded-3 p-3 text-center"
+                              >
+                                <i
+                                  class="bi bi-award-fill text-success d-block fs-4 mb-1"
+                                ></i>
+                                <div class="text-white fw-bold">#1</div>
+                                <small class="text-white-50">Rank</small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Right Column - Details & Nominations -->
+                    <div class="col-lg-5">
+                      <div class="row g-4">
+                        <!-- Achievement Details -->
+                        <div class="col-12">
+                          <div
+                            class="card bg-dark bg-opacity-75 border-0 rounded-4"
+                            style="backdrop-filter: blur(10px)"
+                          >
+                            <div class="card-body p-4">
+                              <h5 class="text-white fw-semibold mb-3">
+                                <i
+                                  class="bi bi-info-circle-fill text-warning me-2"
+                                ></i>
+                                Achievement Details
+                              </h5>
+                              <div class="d-flex flex-column gap-3">
+                                <div
+                                  class="d-flex align-items-center justify-content-between"
+                                >
+                                  <span class="text-white-50">Category</span>
+                                  <span class="text-white fw-medium"
+                                    >Excellence Award</span
+                                  >
+                                </div>
+                                <div
+                                  class="d-flex align-items-center justify-content-between"
+                                >
+                                  <span class="text-white-50"
+                                    >Presented By</span
+                                  >
+                                  <span class="text-white fw-medium"
+                                    >Executive Team</span
+                                  >
+                                </div>
+                                <div
+                                  class="d-flex align-items-center justify-content-between"
+                                >
+                                  <span class="text-white-50">Date</span>
+                                  <span class="text-white fw-medium">{{
+                                    formatDate(event.activeFrom)
+                                  }}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Nominations / Previous Winners -->
+                        <div class="col-12">
+                          <div
+                            class="card bg-dark bg-opacity-75 border-0 rounded-4"
+                            style="backdrop-filter: blur(10px)"
+                          >
+                            <div class="card-body p-4">
+                              <h5 class="text-white fw-semibold mb-3">
+                                <i
+                                  class="bi bi-people-fill text-warning me-2"
+                                ></i>
+                                Nominees
+                              </h5>
+                              <div class="d-flex flex-column gap-2">
+                                <div
+                                  class="d-flex align-items-center gap-3 p-2 bg-white bg-opacity-5 rounded-3"
+                                >
+                                  <div
+                                    class="rounded-circle bg-primary "
+                                    style="width: 40px; height: 40px"
+                                  ></div>
+                                  <span class="text-black">Alex Chen</span>
+                                  <span class="text-black-50 small ms-auto"
+                                    >Engineering</span
+                                  >
+                                </div>
+                                <div
+                                  class="d-flex align-items-center gap-3 p-2 bg-white bg-opacity-5 rounded-3"
+                                >
+                                  <div
+                                    class="rounded-circle bg-success "
+                                    style="width: 40px; height: 40px"
+                                  ></div>
+                                  <span class="text-black">Sarah Johnson</span>
+                                  <span class="text-black-50 small ms-auto"
+                                    >Marketing</span
+                                  >
+                                </div>
+                                <div
+                                  class="d-flex align-items-center gap-3 p-2 bg-white bg-opacity-5 rounded-3"
+                                >
+                                  <div
+                                    class="rounded-circle bg-warning "
+                                    style="width: 40px; height: 40px"
+                                  ></div>
+                                  <span class="text-black">Michael Lee</span>
+                                  <span class="text-black-50 small ms-auto"
+                                    >Sales</span
+                                  >
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Ceremony Info -->
+                        <div class="col-12">
+                          <div
+                            class="card bg-dark bg-opacity-75 border-0 rounded-4"
+                            style="backdrop-filter: blur(10px)"
+                          >
+                            <div class="card-body p-4">
+                              <div class="d-flex align-items-center gap-4">
+                                <div
+                                  class="bg-warning bg-opacity-25 rounded-3 p-3"
+                                >
+                                  <i class="bi bi-clock text-warning fs-3"></i>
+                                </div>
+                                <div>
+                                  <small class="text-white-50 d-block"
+                                    >Ceremony Time</small
+                                  >
+                                  <span class="text-white fw-bold fs-5">{{
+                                    event.activeFrom | date: "h:mm a"
+                                  }}</span>
+                                </div>
+                                <div class="vr bg-white bg-opacity-25"></div>
+                                <div>
+                                  <small class="text-white-50 d-block"
+                                    >Venue</small
+                                  >
+                                  <span class="text-white fw-bold fs-5"
+                                    >Grand Hall</span
+                                  >
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Congratulations Button -->
+                        <div class="col-12">
+                          <button
+                            class="btn btn-warning w-100 rounded-pill py-3 fw-bold"
+                          >
+                            <i class="bi bi-gem me-2"></i>
+                            Congratulate Winner
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- DINNER Template -->
+                <div *ngSwitchCase="'Dinner'">
+                  <div class="row">
+                    <div class="col-lg-6">
+                      <div
+                        class="card bg-dark bg-opacity-75 border-0 rounded-4 p-4"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <span
+                          class="badge bg-danger bg-opacity-25 text-white px-3 py-2 rounded-pill mb-3 w-auto"
+                        >
+                          <i class="bi bi-egg-fried me-2"></i>Dinner Host
+                        </span>
+                        <h3 class="text-white fw-bold mb-2">
+                          {{ getEmployeeName(event.employee) }}
+                        </h3>
+                        <p class="text-white-50 mb-3">
+                          {{ event.employee?.department }}
+                        </p>
+                        <div
+                          class="d-flex align-items-center gap-2 text-white-75"
+                        >
+                          <i class="bi bi-clock text-danger"></i>
+                          <span>{{ event.activeFrom | date: "h:mm a" }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- WORKSHOP Template -->
+                <div *ngSwitchCase="'Workshop'">
+                  <div class="row g-4">
+                    <div class="col-md-5">
+                      <div
+                        class="card bg-success bg-opacity-25 border-0 rounded-4 p-4 h-100 d-flex align-items-center justify-content-center"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <i
+                          class="bi bi-tools text-white display-1 opacity-50"
+                        ></i>
+                      </div>
+                    </div>
+                    <div class="col-md-7">
+                      <div
+                        class="card bg-dark bg-opacity-75 border-0 rounded-4 p-4"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <span
+                          class="badge bg-success bg-opacity-25 text-white px-3 py-2 rounded-pill mb-3 w-auto"
+                        >
+                          <i class="bi bi-easel2 me-2"></i>Workshop Lead
+                        </span>
+                        <h3 class="text-white fw-bold mb-2">
+                          {{ getEmployeeName(event.employee) }}
+                        </h3>
+                        <p class="text-white-50 mb-0">
+                          {{ event.employee?.department }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- MEETING Template -->
+                <div *ngSwitchCase="'Meeting'">
+                  <div class="row g-4">
+                    <div class="col-md-5">
+                      <div
+                        class="card bg-secondary bg-opacity-25 border-0 rounded-4 p-4 h-100 d-flex align-items-center justify-content-center"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <i
+                          class="bi bi-people-fill text-white display-1 opacity-50"
+                        ></i>
+                      </div>
+                    </div>
+                    <div class="col-md-7">
+                      <div
+                        class="card bg-dark bg-opacity-75 border-0 rounded-4 p-4"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <span
+                          class="badge bg-secondary bg-opacity-25 text-white px-3 py-2 rounded-pill mb-3 w-auto"
+                        >
+                          <i class="bi bi-person-badge me-2"></i>Meeting Lead
+                        </span>
+                        <h3 class="text-white fw-bold mb-2">
+                          {{ getEmployeeName(event.employee) }}
+                        </h3>
+                        <p class="text-white-50 mb-0">
+                          {{ event.employee?.department }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- COMPANY EVENT Template -->
+                <div *ngSwitchCase="'CompanyEvent'">
+                  <div class="row g-4">
+                    <div class="col-md-5">
+                      <div
+                        class="card bg-dark border-0 rounded-4 p-4 h-100 d-flex align-items-center justify-content-center"
+                        style="
+                          backdrop-filter: blur(10px);
+                          background: rgba(0, 0, 0, 0.5);
+                        "
+                      >
+                        <i
+                          class="bi bi-building text-white display-1 opacity-50"
+                        ></i>
+                      </div>
+                    </div>
+                    <div class="col-md-7">
+                      <div
+                        class="card bg-dark bg-opacity-75 border-0 rounded-4 p-4"
+                        style="backdrop-filter: blur(10px)"
+                      >
+                        <span
+                          class="badge bg-dark bg-opacity-50 text-white px-3 py-2 rounded-pill mb-3 w-auto border border-white border-opacity-25"
+                        >
+                          <i class="bi bi-star-fill me-2 text-warning"></i
+                          >Company Event
+                        </span>
+                        <h3 class="text-white fw-bold mb-2">
+                          {{ getEmployeeName(event.employee) }}
+                        </h3>
+                        <p class="text-white-50 mb-0">
+                          {{ event.employee?.department }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- DEFAULT Template -->
+                <div *ngSwitchDefault>
+                  <div
+                    class="card bg-dark bg-opacity-75 border-0 rounded-4 overflow-hidden"
+                    style="backdrop-filter: blur(10px)"
+                  >
+                    <div class="row g-0">
+                      <!-- Left Column - Avatar Section -->
+                      <div class="col-md-auto p-4 pb-md-4 pb-0">
+                        <div class="position-relative">
+                          <!-- Employee Avatar with improved styling -->
+                          <div
+                            class="rounded-3 overflow-hidden border border-2 border-primary border-opacity-25 shadow"
+                            style="width: 100px; height: 100px"
+                          >
+                            <img
+                              *ngIf="getEmployeePhoto(event.employee)"
+                              [src]="getEmployeePhoto(event.employee)"
+                              [alt]="getEmployeeName(event.employee)"
+                              class="w-100 h-100 object-fit-cover"
+                            />
+                            <div
+                              *ngIf="!getEmployeePhoto(event.employee)"
+                              class="w-100 h-100 d-flex align-items-center justify-content-center bg-primary bg-gradient text-white fw-bold fs-2"
+                            >
+                              {{ getEmployeeInitials(event.employee) }}
+                            </div>
+                          </div>
+                          <!-- Optional online indicator (can be removed if not needed) -->
+                          <div
+                            class="position-absolute bottom-0 end-0 mb-1 me-1"
+                          >
+                            <div
+                              class="bg-success rounded-circle p-1 border border-2 border-dark"
+                              style="width: 14px; height: 14px"
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Right Column - Content Section -->
+                      <div class="col p-4">
+                        <!-- Header with name and department -->
+                        <div
+                          class="d-flex flex-wrap align-items-center gap-3 mb-3"
+                        >
+                          <h4
+                            class="text-white fw-semibold mb-0"
+                            *ngIf="getEmployeeName(event.employee)"
+                          >
+                            {{ getEmployeeName(event.employee) }}
+                          </h4>
+                          <span
+                            class="badge bg-primary bg-opacity-15 text-primary-50 px-3 py-2 rounded-pill fs-6 fw-normal"
+                          >
+                            <i class="bi bi-briefcase-fill me-2 small"></i>
+                            {{ event.employee?.department || "Team Member" }}
+                          </span>
+                        </div>
+
+                        <!-- Email with icon -->
+                        <div
+                          class="d-flex align-items-center gap-2 mb-3"
+                          *ngIf="event.employee?.email"
+                        >
+                          <i
+                            class="bi bi-envelope-fill text-primary-50 small"
+                          ></i>
+                          <span class="text-white-50 small">{{
+                            event.employee?.email
+                          }}</span>
+                        </div>
+
+                        <!-- Description with improved styling -->
+                        <div
+                          class="bg-white bg-opacity-05 rounded-3 p-3 mb-3"
+                          *ngIf="event.description"
+                        >
+                          <div class="d-flex gap-2">
+                            <i
+                              class="bi bi-quote text-primary flex-shrink-0"
+                            ></i>
+                            <p class="text-white-75 mb-0 small lh-base">
+                              {{ event.description }}
+                            </p>
+                          </div>
+                        </div>
+
+                        <!-- Facilities with improved layout -->
+                        <div
+                          class="mb-3"
+                          *ngIf="
+                            event.facilities && event.facilities !== 'string'
+                          "
+                        >
+                          <div
+                            class="d-flex flex-wrap align-items-center gap-2"
+                          >
+                            <span class="text-white-50 small fw-semibold me-1"
+                              >Facilities:</span
+                            >
+                            <span
+                              class="badge bg-white bg-opacity-10 text-white-75 px-3 py-2 rounded-pill border border-white border-opacity-10 d-inline-flex align-items-center gap-2"
+                              *ngFor="
+                                let facility of getFacilitiesList(
+                                  event.facilities
+                                )
+                              "
+                            >
+                              <i
+                                class="bi bi-check-circle-fill text-success small"
+                              ></i>
+                              <span>{{ facility }}</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- Date range with improved visual hierarchy -->
+                        <div
+                          class="d-flex flex-wrap align-items-center gap-4 pt-2 border-top border-white border-opacity-10"
+                        >
+                          <div class="d-flex align-items-center gap-2">
+                            <div class="bg-primary bg-opacity-15 rounded-2 p-2">
+                              <i class="bi bi-calendar-plus text-primary"></i>
+                            </div>
+                            <div>
+                              <div
+                                class="text-white-50 small text-uppercase fw-semibold"
+                                style="font-size: 0.7rem"
+                              >
+                                STARTS
+                              </div>
+                              <span class="text-white small fw-medium">{{
+                                formatDate(event.activeFrom)
+                              }}</span>
+                            </div>
+                          </div>
+                          <div
+                            class="vr bg-white bg-opacity-20 d-none d-sm-block"
+                          ></div>
+                          <div class="d-flex align-items-center gap-2">
+                            <div class="bg-primary bg-opacity-15 rounded-2 p-2">
+                              <i class="bi bi-calendar-minus text-primary"></i>
+                            </div>
+                            <div>
+                              <div
+                                class="text-white-50 small text-uppercase fw-semibold"
+                                style="font-size: 0.7rem"
+                              >
+                                ENDS
+                              </div>
+                              <span class="text-white small fw-medium">{{
+                                formatDate(event.activeTo)
+                              }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="container mt-auto mb-5 pb-5">
+          <div class="row">
+            <div class="col-12">
+              <div
+                class="card bg-dark bg-opacity-75 border-0 rounded-4 p-3"
+                style="backdrop-filter: blur(10px)"
+              >
+                <div class="d-flex align-items-center gap-4">
+                  <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-person-circle text-primary fs-2"></i>
+                    <div>
+                      <small class="text-white-50 d-block">Event Host</small>
+                      <span class="text-white fw-semibold">{{
+                        getEmployeeName(event.employee)
+                      }}</span>
+                    </div>
+                  </div>
+                  <div class="vr bg-white bg-opacity-25"></div>
+                  <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-clock text-primary"></i>
+                    <span class="text-white-75 small">{{
+                      getTimeRemaining(event)
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Remaining Badge -->
+      <div
+        class="position-absolute bottom-0 start-0 mb-5 ms-5"
+        *ngIf="!isEventLive(event)"
+      >
+        <div
+          class="badge bg-dark bg-opacity-75 text-white d-flex align-items-center gap-2 px-4 py-3 rounded-pill border border-white border-opacity-25"
+          style="backdrop-filter: blur(10px)"
+        >
+          <i class="bi bi-hourglass-split text-warning"></i>
+          <span class="small fw-semibold">{{ getTimeRemaining(event) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Arrows -->
+    <button
+      class="btn btn-dark bg-dark bg-opacity-50 border-0 position-absolute top-50 start-0 translate-middle-y ms-4 rounded-circle p-3 shadow-lg"
+      style="width: 56px; height: 56px; backdrop-filter: blur(10px)"
+      (click)="prevSlide()"
+      *ngIf="events.length > 1"
+    >
+      <i class="bi bi-chevron-left text-white fs-4"></i>
+    </button>
+    <button
+      class="btn btn-dark bg-dark bg-opacity-50 border-0 position-absolute top-50 end-0 translate-middle-y me-4 rounded-circle p-3 shadow-lg"
+      style="width: 56px; height: 56px; backdrop-filter: blur(10px)"
+      (click)="nextSlide()"
+      *ngIf="events.length > 1"
+    >
+      <i class="bi bi-chevron-right text-white fs-4"></i>
+    </button>
+
+    <!-- Progress Indicators -->
+    <div
+      class="position-absolute bottom-0 start-50 translate-middle-x mb-5 d-flex gap-2"
+    >
+      <div
+        *ngFor="let event of events; let i = index"
+        class="rounded-pill cursor-pointer"
+        style="
+          width: 50px;
+          height: 4px;
+          background: rgba(255, 255, 255, 0.3);
+          overflow: hidden;
+        "
+        (click)="goToSlide(i)"
+      >
+        <div
+          class="h-100 bg-primary"
+          [style.width.%]="i === currentSlideIndex ? 100 : 0"
+          style="transition: width 0.3s ease"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Slide Counter -->
+    <div
+      class="position-absolute bottom-0 end-0 mb-5 me-5 bg-dark bg-opacity-75 rounded-pill px-4 py-2 border border-white border-opacity-25"
+      style="backdrop-filter: blur(10px)"
+    >
+      <span class="text-primary fw-bold">{{ currentSlideIndex + 1 }}</span>
+      <span class="text-white-50 mx-2">/</span>
+      <span class="text-white-50">{{ events.length }}</span>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div
+    class="min-vh-100 d-flex align-items-center justify-content-center"
+    style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)"
+    *ngIf="!isLoading && events.length === 0 && !errorMessage"
+  >
+    <div class="text-center">
+      <div
+        class="bg-white bg-opacity-10 rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center"
+        style="width: 100px; height: 100px"
+      >
+        <i class="bi bi-calendar-x text-white-50 display-4"></i>
+      </div>
+      <h3 class="text-white fw-bold mb-3">No Events Found</h3>
+      <p class="text-white-50 mb-4">
+        There are no celebration events scheduled at this time.
+      </p>
+      <button
+        class="btn btn-outline-light btn-lg px-5 rounded-pill"
+        (click)="refreshEvents()"
+      >
+        <i class="bi bi-arrow-repeat me-2"></i> Refresh
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,186 @@
+
+            <!-- Wedding Template -->
+            <div *ngSwitchCase="'Wedding'" class="wedding-template">
+              <div class="floating-hearts">
+                <i class="fas fa-heart"></i>
+                <i class="fas fa-heart"></i>
+                <i class="fas fa-heart"></i>
+              </div>
+              
+              <div class="employee-card wedding-style">
+                <div class="wedding-rings">
+                  <i class="fas fa-ring"></i>
+                  <i class="fas fa-ring"></i>
+                </div>
+                
+                <div class="employee-details text-center">
+                  <h2 class="couple-name">{{ getEmployeeName(event) }}</h2>
+                  <div class="wedding-date">
+                    <i class="far fa-calendar-alt"></i>
+                    <span>{{ formatDate(event.activeFrom) }}</span>
+                  </div>
+                  <div class="wedding-countdown">
+                    <span class="countdown-label">Celebrating</span>
+                    <span class="years">{{ event.employee?.weddingAnniversary || '1st' }}</span>
+                    <span class="countdown-label">Anniversary</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Anniversary Template -->
+            <div *ngSwitchCase="'Anniversary'" class="anniversary-template">
+              <div class="employee-card anniversary-style">
+                <div class="anniversary-badge">
+                  <i class="fas fa-heart"></i>
+                  <span class="years">{{ event.employee?.workAnniversary || '1' }} Years</span>
+                </div>
+                
+                <div class="employee-details">
+                  <div class="employee-name-wrapper">
+                    <i class="fas fa-trophy"></i>
+                    <span class="employee-name">{{ getEmployeeName(event) }}</span>
+                  </div>
+                  <div class="company-logo">
+                    <i class="fas fa-building"></i>
+                    <span>{{ event.employee?.department }}</span>
+                  </div>
+                  <div class="anniversary-message">
+                    Thank you for {{ event.employee?.workAnniversary || '1' }} amazing years!
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Conference Template -->
+            <div *ngSwitchCase="'Conference'" class="conference-template">
+              <div class="employee-card conference-style">
+                <div class="speaker-badge">
+                  <i class="fas fa-microphone-alt"></i>
+                  <span>Keynote Speaker</span>
+                </div>
+                
+                <div class="employee-details">
+                  <div class="employee-name-wrapper">
+                    <i class="fas fa-user-tie"></i>
+                    <span class="employee-name">{{ getEmployeeName(event) }}</span>
+                  </div>
+                  <div class="employee-title">{{ event.employee?.designation || 'Speaker' }}</div>
+                  <div class="conference-details">
+                    <div class="detail-item">
+                      <i class="fas fa-clock"></i>
+                      <span>{{ formatDate(event.activeFrom) }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <i class="fas fa-map-marker-alt"></i>
+                      <span>{{ event.location || 'Main Hall' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Party Template -->
+            <div *ngSwitchCase="'Party'" class="party-template">
+              <div class="party-effects">
+                <i class="fas fa-glass-cheers"></i>
+                <i class="fas fa-music"></i>
+                <i class="fas fa-cocktail"></i>
+              </div>
+              
+              <div class="employee-card party-style">
+                <div class="party-host">
+                  <span>Hosted by</span>
+                </div>
+                <div class="employee-details">
+                  <div class="employee-name-wrapper">
+                    <i class="fas fa-star"></i>
+                    <span class="employee-name">{{ getEmployeeName(event) }}</span>
+                  </div>
+                  <div class="party-details">
+                    <div class="detail-item">
+                      <i class="fas fa-clock"></i>
+                      <span>{{ formatDate(event.activeFrom) }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <i class="fas fa-location-dot"></i>
+                      <span>{{ event.location || 'Party Hall' }}</span>
+                    </div>
+                  </div>
+                  <div class="dress-code">
+                    <i class="fas fa-tshirt"></i>
+                    <span>Dress Code: {{ event.dressCode || 'Festive' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Best Performer Template -->
+            <div *ngSwitchCase="'BestPerformer'" class="performer-template">
+              <div class="trophy-animation">
+                <i class="fas fa-trophy"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-medal"></i>
+              </div>
+              
+              <div class="employee-card performer-style">
+                <div class="performer-badge">
+                  <span class="badge-text">Best Performer</span>
+                  <span class="badge-date">{{ formatDate(event.activeFrom) }}</span>
+                </div>
+                
+                <div class="employee-details text-center">
+                  <div class="employee-name-wrapper">
+                    <span class="employee-name">{{ getEmployeeName(event) }}</span>
+                  </div>
+                  <div class="achievement-stats">
+                    <div class="stat">
+                      <span class="stat-value">{{ event.achievement || 'Top' }}</span>
+                      <span class="stat-label">Performance</span>
+                    </div>
+                    <div class="stat">
+                      <span class="stat-value">{{ event.rating || '5.0' }}</span>
+                      <span class="stat-label">Rating</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+
+
+             <!-- Dinner Template -->
+            <div *ngSwitchCase="'Dinner'" class="dinner-template">
+              <div class="dinner-effects">
+                <i class="fas fa-utensils"></i>
+                <i class="fas fa-wine-glass-alt"></i>
+              </div>
+              
+              <div class="employee-card dinner-style">
+                <div class="dinner-header">
+                  <span class="dinner-type">{{ event.dinnerType || 'Gala Dinner' }}</span>
+                </div>
+                
+                <div class="employee-details">
+                  <div class="employee-name-wrapper">
+                    <i class="fas fa-user-chef"></i>
+                    <span class="employee-name">{{ getEmployeeName(event) }}</span>
+                  </div>
+                  <div class="dinner-info">
+                    <div class="info-item">
+                      <i class="fas fa-clock"></i>
+                      <span>{{ formatDate(event.activeFrom) }}</span>
+                    </div>
+                    <div class="info-item">
+                      <i class="fas fa-utensil-spoon"></i>
+                      <span>{{ event.cuisine || 'Multi-Cuisine' }}</span>
+                    </div>
+                  </div>
+                  <div class="table-info" *ngIf="event.tableNumber">
+                    <i class="fas fa-chair"></i>
+                    <span>Table {{ event.tableNumber }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>

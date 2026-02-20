@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 
+import { AuthService} from "../../services/auth.service"
 @Component({
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
@@ -7,7 +8,7 @@ import { Component, Input } from '@angular/core';
 })
 export class SidebarComponent {
   @Input() isCollapsed = false;
-
+  constructor(private authService: AuthService) {}
   menuItems = [
     {
       path: '/dashboard',
@@ -27,6 +28,7 @@ export class SidebarComponent {
       icon: 'bi-calendar-event',
       active: false
     },
+    
     {
       path: '/calendar',
       label: 'Calendar',
@@ -34,10 +36,32 @@ export class SidebarComponent {
       active: false
     },
     {
-      path: '/settings',
-      label: 'Settings',
-      icon: 'bi-gear',
+      path: '/event-settings',
+      label: 'Event Settings',
+      icon: 'bi-sliders',
+      active: false
+    },
+        {
+      path: '/theme-settings',
+      label: 'theme Settings',
+      icon: 'bi bi-images',
+    
+      active: false
+    },
+      {
+      path: '/users',
+      label: 'user Component',
+      icon: 'bi bi-person-square',
+   
       active: false
     }
+ 
   ];
+     
+  logout() {
+    console.log("Logout clicked ✅");
+
+   
+    this.authService.logout();
+  }
 }

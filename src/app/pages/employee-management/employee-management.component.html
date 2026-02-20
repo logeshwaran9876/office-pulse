@@ -1,3 +1,17 @@
+<!-- Toast Notification -->
+<div class="toast-notification" *ngIf="showToast" [class.toast-success]="toastType === 'success'" 
+     [class.toast-error]="toastType === 'error'" [class.toast-info]="toastType === 'info'">
+  <div class="toast-content">
+    <i class="bi" [class.bi-check-circle-fill]="toastType === 'success'"
+       [class.bi-exclamation-triangle-fill]="toastType === 'error'"
+       [class.bi-info-circle-fill]="toastType === 'info'"></i>
+    <span>{{ toastMessage }}</span>
+  </div>
+  <button class="toast-close" (click)="hideToast()">
+    <i class="bi bi-x"></i>
+  </button>
+</div>
+
 <div class="container-fluid px-4 py-4">
   <!-- Header -->
   <div class="row mb-4">
@@ -28,68 +42,86 @@
         <div class="card-body p-4">
           <div class="row g-3">
             <!-- Search -->
-            <div class="col-lg-5">
+            <div class="col-lg-3">
               <div class="input-group">
                 <span class="input-group-text bg-light border-end-0">
                   <i class="bi bi-search"></i>
                 </span>
                 <input type="text" 
                        class="form-control border-start-0 ps-0" 
-                       placeholder="Search by name, email or ID..."
+                       placeholder="Search by name, email, mobile or ID..."
                        (input)="onSearch($event)"
                        [value]="searchTerm">
               </div>
             </div>
             
-            <!-- Role Filter -->
-            <div class="col-lg-3">
-              <div class="dropdown" ngbDropdown>
-                <button class="btn btn-outline-secondary w-100 text-start d-flex justify-content-between align-items-center" 
-                        ngbDropdownToggle>
-                  <span>
-                    <i class="bi bi-person-badge me-2"></i>
-                    {{ selectedRole || 'All Roles' }}
-                  </span>
-                </button>
-                <div class="dropdown-menu w-100">
-                  <button class="dropdown-item" (click)="filterByRole('')">
-                    <i class="bi bi-asterisk me-2"></i>All Roles
-                  </button>
-                  <div class="dropdown-divider"></div>
-                  <button
-                    class="dropdown-item"
-                    *ngFor="let role of roles"
-                    (click)="filterByRole(role)"
-                  >
-                    <i class="bi bi-tag me-2"></i>{{ role }}
-                  </button>
-                </div>
-              </div>
+            <!-- Department Filter -->
+            <div class="col-lg-2">
+              <select class="form-select" (change)="filterByDepartment($any($event.target).value)">
+                <option value="All">All Departments</option>
+                <option *ngFor="let dept of departments" [value]="dept" [selected]="selectedDepartment === dept">
+                  {{ dept }}
+                </option>
+              </select>
+            </div>
+            
+            <!-- Gender Filter -->
+            <div class="col-lg-2">
+              <select class="form-select" (change)="filterByGender($any($event.target).value)">
+                <option value="All">All Genders</option>
+                <option *ngFor="let gender of genders" [value]="gender" [selected]="selectedGender === gender">
+                  {{ gender }}
+                </option>
+              </select>
+            </div>
+            
+            <!-- Marital Status Filter -->
+            <div class="col-lg-2">
+              <select class="form-select" (change)="filterByMaritalStatus($any($event.target).value)">
+                <option value="All">All Status</option>
+                <option *ngFor="let status of maritalStatuses" [value]="status" [selected]="selectedMaritalStatus === status">
+                  {{ status }}
+                </option>
+              </select>
             </div>
             
             <!-- Status Filter -->
-            <div class="col-lg-3">
-              <div class="btn-group w-100">
-                <button class="btn" 
-                        [class.btn-primary]="selectedStatus === 'Active'"
-                        [class.btn-outline-secondary]="selectedStatus !== 'Active'"
-                        (click)="filterByStatus('Active')">
-                  <i class="bi bi-check-circle me-2"></i>Active
-                </button>
-                <button class="btn" 
-                        [class.btn-primary]="selectedStatus === 'Inactive'"
-                        [class.btn-outline-secondary]="selectedStatus !== 'Inactive'"
-                        (click)="filterByStatus('Inactive')">
-                  <i class="bi bi-x-circle me-2"></i>Inactive
-                </button>
-              </div>
+            <div class="col-lg-2">
+              <select class="form-select" (change)="filterByStatus($any($event.target).value)">
+                <option value="All">All Status</option>
+                <option value="Active" [selected]="selectedStatus === 'Active'">Active</option>
+                <option value="Inactive" [selected]="selectedStatus === 'Inactive'">Inactive</option>
+              </select>
             </div>
             
             <!-- Clear Filters -->
             <div class="col-lg-1">
-              <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+              <button class="btn btn-outline-secondary w-100" (click)="clearFilters()" title="Clear Filters">
                 <i class="bi bi-arrow-repeat"></i>
               </button>
+            </div>
+          </div>
+          
+          <!-- Active Filters Display -->
+          <div class="row mt-3" *ngIf="searchTerm || selectedDepartment || selectedGender || selectedMaritalStatus || selectedStatus">
+            <div class="col-12">
+              <div class="d-flex flex-wrap gap-2">
+                <span class="badge bg-light text-dark p-2" *ngIf="searchTerm">
+                  Search: "{{ searchTerm }}" <i class="bi bi-x ms-2" style="cursor: pointer;" (click)="clearFilters()"></i>
+                </span>
+                <span class="badge bg-light text-dark p-2" *ngIf="selectedDepartment">
+                  Department: {{ selectedDepartment }} <i class="bi bi-x ms-2" style="cursor: pointer;" (click)="filterByDepartment('All')"></i>
+                </span>
+                <span class="badge bg-light text-dark p-2" *ngIf="selectedGender">
+                  Gender: {{ selectedGender }} <i class="bi bi-x ms-2" style="cursor: pointer;" (click)="filterByGender('All')"></i>
+                </span>
+                <span class="badge bg-light text-dark p-2" *ngIf="selectedMaritalStatus">
+                  Marital: {{ selectedMaritalStatus }} <i class="bi bi-x ms-2" style="cursor: pointer;" (click)="filterByMaritalStatus('All')"></i>
+                </span>
+                <span class="badge bg-light text-dark p-2" *ngIf="selectedStatus">
+                  Status: {{ selectedStatus }} <i class="bi bi-x ms-2" style="cursor: pointer;" (click)="filterByStatus('All')"></i>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -102,52 +134,85 @@
     <div class="col-12">
       <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
-          <div class="table-responsive">
+          <!-- Loading Indicator -->
+          <div *ngIf="isLoading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading employees...</p>
+          </div>
+
+          <!-- Table -->
+          <div class="table-responsive" *ngIf="!isLoading">
             <table class="table table-hover align-middle mb-0">
               <thead class="bg-light">
                 <tr>
                   <th class="px-4 py-3">Employee</th>
-                  <th class="py-3">Employee ID</th>
+                  <th class="py-3">Contact</th>
                   <th class="py-3">Department</th>
-                  <th class="py-3">Role</th>
+                  <th class="py-3">Personal Info</th>
                   <th class="py-3">Date Joined</th>
                   <th class="py-3">Status</th>
                   <th class="py-3 text-end px-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let emp of paginatedEmployees">
+                <tr *ngFor="let emp of filteredEmployees">
                   <td class="px-4">
                     <div class="d-flex align-items-center">
-                      <div
-                        class="rounded-circle bg-gradient-primary d-flex align-items-center justify-content-center me-3"
-                        style="width: 45px; height: 45px;"
-                      >
-                        <span class="text-white fw-bold">{{ emp.name.charAt(0) }}</span>
+                      <div class="employee-avatar me-3">
+                        <img *ngIf="getEmployeePhotoUrl(emp)" 
+                             [src]="getEmployeePhotoUrl(emp)" 
+                             [alt]="emp.name"
+                             class="rounded-circle" 
+                             style="width: 45px; height: 45px; object-fit: cover;"
+                             onerror="this.style.display='none'">
+                        <div *ngIf="!getEmployeePhotoUrl(emp)" 
+                             class="rounded-circle bg-gradient-primary d-flex align-items-center justify-content-center"
+                             style="width: 45px; height: 45px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                          <span class="text-white fw-bold">{{ getInitials(emp.name) }}</span>
+                        </div>
                       </div>
                       <div>
                         <span class="fw-semibold d-block">{{ emp.name }}</span>
-                        <small class="text-muted">{{ emp.email }}</small>
+                        <small class="text-muted">{{ getEmployeeShortId(emp) }}</small>
                       </div>
                     </div>
                   </td>
                   <td>
-                    <span class="badge bg-light text-dark">{{ emp.employeeId }}</span>
+                    <div><i class="bi bi-envelope me-2 text-muted"></i>{{ emp.email }}</div>
+                    <div class="mt-1" *ngIf="emp.mobile">
+                      <i class="bi bi-phone me-2 text-muted"></i>{{ emp.mobile }}
+                    </div>
                   </td>
-                  <td>{{ emp.department }}</td>
                   <td>
-                    <span class="badge bg-info bg-opacity-10 text-info">
+                    <span class="fw-semibold">{{ emp.department }}</span>
+                    <div *ngIf="emp.role && emp.role !== emp.department" class="small text-muted">
                       {{ emp.role }}
-                    </span>
+                    </div>
+                  </td>
+                  <td>
+                    <div *ngIf="emp.gender">
+                      <i class="bi" [class.bi-gender-male]="emp.gender === 'Male'" 
+                         [class.bi-gender-female]="emp.gender === 'Female'"
+                         [class.bi-gender-ambiguous]="emp.gender === 'Other'"></i>
+                      {{ emp.gender }}
+                    </div>
+                    <div *ngIf="emp.maritalStatus" class="mt-1">
+                      <i [class]="getMaritalStatusIcon(emp.maritalStatus)"></i>
+                      {{ emp.maritalStatus }}
+                      <span *ngIf="emp.wifeName" class="small text-muted">({{ emp.wifeName }})</span>
+                    </div>
+                    <div *ngIf="emp.dateOfBirth" class="mt-1 small text-muted">
+                      <i class="bi bi-cake me-1"></i>{{ formatDate(emp.dateOfBirth) }}
+                    </div>
                   </td>
                   <td>
                     <i class="bi bi-calendar3 me-2 text-muted"></i>
-                    {{ emp.dateJoined | date: 'MMM d, y' }}
+                    {{ emp.dateJoined ? (emp.dateJoined | date: 'MMM d, y') : 'N/A' }}
                   </td>
                   <td>
-                    <span
-                      class="badge {{ emp.status === 'Active' ? 'bg-success' : 'bg-secondary' }} px-3 py-2"
-                    >
+                    <span class="badge {{ getStatusBadgeClass(emp.status) }} px-3 py-2">
                       {{ emp.status }}
                     </span>
                   </td>
@@ -155,18 +220,20 @@
                     <button
                       class="btn btn-sm btn-outline-primary me-2"
                       (click)="openEditModal(editEmployeeModal, emp)"
+                      title="Edit"
                     >
                       <i class="bi bi-pencil"></i>
                     </button>
                     <button
                       class="btn btn-sm btn-outline-danger"
                       (click)="openDeleteModal(deleteConfirmModal, emp)"
+                      title="Delete"
                     >
                       <i class="bi bi-trash"></i>
                     </button>
                   </td>
                 </tr>
-                <tr *ngIf="paginatedEmployees.length === 0">
+                <tr *ngIf="filteredEmployees.length === 0">
                   <td colspan="7" class="text-center py-5">
                     <div class="my-5">
                       <i class="bi bi-people fs-1 text-muted"></i>
@@ -183,25 +250,25 @@
           </div>
           
           <!-- Pagination -->
-          <div
-            *ngIf="filteredEmployees.length > pageSize"
-            class="d-flex justify-content-between align-items-center p-4 border-top"
-          >
+          <div class="d-flex justify-content-between align-items-center p-4 border-top" *ngIf="totalItems > pageSize">
             <div class="text-muted small">
               Showing {{ ((currentPage - 1) * pageSize) + 1 }} to
               {{ currentPage * pageSize > totalItems ? totalItems : currentPage * pageSize }}
               of {{ totalItems }} entries
             </div>
-            <ngb-pagination
-              [(page)]="currentPage"
-              [pageSize]="pageSize"
-              [collectionSize]="totalItems"
-              [maxSize]="5"
-              [rotate]="true"
-              [boundaryLinks]="true"
-              class="mb-0"
-            >
-            </ngb-pagination>
+            <div class="pagination-controls">
+              <button class="btn btn-sm btn-outline-primary me-2" 
+                      [disabled]="currentPage === 1"
+                      (click)="onPageChange(currentPage - 1)">
+                <i class="bi bi-chevron-left"></i> Previous
+              </button>
+              <span class="mx-2">Page {{ currentPage }} of {{ totalPages }}</span>
+              <button class="btn btn-sm btn-outline-primary ms-2"
+                      [disabled]="currentPage === totalPages"
+                      (click)="onPageChange(currentPage + 1)">
+                Next <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -220,25 +287,43 @@
   </div>
   <div class="modal-body">
     <form [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
-      <div class="row g-3">
+      <!-- Basic Information -->
+      <h6 class="text-primary mb-3"><i class="bi bi-person-badge me-2"></i>Basic Information</h6>
+      <div class="row g-3 mb-4">
         <div class="col-md-6">
-          <label class="form-label fw-semibold">Full Name</label>
+          <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
           <input
             type="text"
             class="form-control"
-            formControlName="name"
-            [class.is-invalid]="employeeForm.get('name')?.invalid && employeeForm.get('name')?.touched"
+            formControlName="firstName"
+            [class.is-invalid]="employeeForm.get('firstName')?.invalid && employeeForm.get('firstName')?.touched"
           />
           <div
             class="invalid-feedback"
-            *ngIf="employeeForm.get('name')?.invalid && employeeForm.get('name')?.touched"
+            *ngIf="employeeForm.get('firstName')?.invalid && employeeForm.get('firstName')?.touched"
           >
-            Name is required
+            First name is required
           </div>
         </div>
         
         <div class="col-md-6">
-          <label class="form-label fw-semibold">Email Address</label>
+          <label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="lastName"
+            [class.is-invalid]="employeeForm.get('lastName')?.invalid && employeeForm.get('lastName')?.touched"
+          />
+          <div
+            class="invalid-feedback"
+            *ngIf="employeeForm.get('lastName')?.invalid && employeeForm.get('lastName')?.touched"
+          >
+            Last name is required
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
           <input
             type="email"
             class="form-control"
@@ -254,15 +339,38 @@
         </div>
         
         <div class="col-md-6">
-          <label class="form-label fw-semibold">Department</label>
-          <input type="text" class="form-control" formControlName="department"
-                 [class.is-invalid]="employeeForm.get('department')?.invalid && employeeForm.get('department')?.touched">
+          <label class="form-label fw-semibold">Mobile Number</label>
+          <input
+            type="tel"
+            class="form-control"
+            formControlName="mobile"
+            placeholder="+91 9876543210"
+            [class.is-invalid]="employeeForm.get('mobile')?.invalid && employeeForm.get('mobile')?.touched"
+          />
+          <div
+            class="invalid-feedback"
+            *ngIf="employeeForm.get('mobile')?.invalid && employeeForm.get('mobile')?.touched"
+          >
+            Invalid mobile number
+          </div>
         </div>
-        
+      </div>
+
+      <!-- Employment Details -->
+      <h6 class="text-primary mb-3"><i class="bi bi-briefcase me-2"></i>Employment Details</h6>
+      <div class="row g-3 mb-4">
         <div class="col-md-6">
-          <label class="form-label fw-semibold">Role</label>
-          <input type="text" class="form-control" formControlName="role"
-                 [class.is-invalid]="employeeForm.get('role')?.invalid && employeeForm.get('role')?.touched">
+          <label class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" formControlName="department"
+                 [class.is-invalid]="employeeForm.get('department')?.invalid && employeeForm.get('department')?.touched"
+                 placeholder="e.g., Software Development"
+                 list="departmentList">
+          <datalist id="departmentList">
+            <option *ngFor="let dept of departments" [value]="dept"></option>
+          </datalist>
+          <div class="invalid-feedback" *ngIf="employeeForm.get('department')?.invalid && employeeForm.get('department')?.touched">
+            Department is required
+          </div>
         </div>
         
         <div class="col-md-6">
@@ -271,7 +379,6 @@
             type="date"
             class="form-control"
             formControlName="dateJoined"
-            [class.is-invalid]="employeeForm.get('dateJoined')?.invalid && employeeForm.get('dateJoined')?.touched"
           />
         </div>
         
@@ -283,43 +390,107 @@
           </select>
         </div>
       </div>
+
+      <!-- Personal Information -->
+      <h6 class="text-primary mb-3"><i class="bi bi-heart me-2"></i>Personal Information</h6>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Gender</label>
+          <select class="form-select" formControlName="gender">
+            <option value="">Select Gender</option>
+            <option *ngFor="let gender of genders" [value]="gender">{{ gender }}</option>
+          </select>
+        </div>
+        
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Marital Status</label>
+          <select class="form-select" formControlName="maritalStatus" (change)="onMaritalStatusChange($event)">
+            <option value="">Select Status</option>
+            <option *ngFor="let status of maritalStatuses" [value]="status">{{ status }}</option>
+          </select>
+        </div>
+        
+        <div class="col-md-6" *ngIf="employeeForm.get('maritalStatus')?.value === 'Married'">
+          <label class="form-label fw-semibold">Spouse Name</label>
+          <input type="text" class="form-control" formControlName="wifeName" placeholder="Enter spouse name">
+        </div>
+        
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Date of Birth</label>
+          <input type="date" class="form-control" formControlName="dateOfBirth">
+        </div>
+        
+        <div class="col-md-6" *ngIf="employeeForm.get('maritalStatus')?.value === 'Married'">
+          <label class="form-label fw-semibold">Wedding Date</label>
+          <input type="date" class="form-control" formControlName="weddingDate">
+        </div>
+      </div>
+
+      <!-- Photo Upload -->
+      <h6 class="text-primary mb-3"><i class="bi bi-camera me-2"></i>Employee Photo</h6>
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="photo-upload-area text-center p-4 border rounded-3" 
+               (click)="photoInput.click()"
+               style="cursor: pointer; border: 2px dashed #dee2e6;">
+            <input #photoInput type="file" class="d-none" accept="image/*" (change)="onPhotoSelected($event)">
+            
+            <div *ngIf="!photoPreview && !employeeForm.get('employeePhoto')?.value">
+              <i class="bi bi-cloud-upload fs-1 text-muted"></i>
+              <p class="mt-2 mb-0">Click to upload employee photo</p>
+              <small class="text-muted">PNG, JPG up to 5MB</small>
+            </div>
+
+            <div *ngIf="photoPreview || employeeForm.get('employeePhoto')?.value" class="position-relative d-inline-block">
+              <img [src]="photoPreview || getEmployeePhotoUrl(selectedEmployee!)" 
+                   class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover;"
+                   onerror="this.src='assets/default-avatar.png'">
+              <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 rounded-circle"
+                      (click)="removePhoto(); $event.stopPropagation()">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer px-0 pb-0">
+        <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">
+          <i class="bi bi-x-lg me-2"></i>Cancel
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="employeeForm.invalid">
+          <i class="bi {{ isEditMode ? 'bi-check-lg' : 'bi-person-plus' }} me-2"></i>
+          {{ isEditMode ? 'Update Employee' : 'Add Employee' }}
+        </button>
+      </div>
     </form>
-  </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">
-      <i class="bi bi-x-lg me-2"></i>Cancel
-    </button>
-    <button type="button" class="btn btn-primary" (click)="onSubmit()" [disabled]="employeeForm.invalid">
-      <i class="bi {{ isEditMode ? 'bi-check-lg' : 'bi-person-plus' }} me-2"></i>
-      {{ isEditMode ? 'Update Employee' : 'Add Employee' }}
-    </button>
   </div>
 </ng-template>
 
 <!-- Edit Employee Modal (reuse same template) -->
 <ng-template #editEmployeeModal let-modal>
-  <!-- Same as add modal, just with different title -->
   <ng-container *ngTemplateOutlet="addEmployeeModal; context: {$implicit: modal}"></ng-container>
 </ng-template>
 
 <!-- Delete Confirmation Modal -->
 <ng-template #deleteConfirmModal let-modal>
-  <div class="modal-header">
-    <h5 class="modal-title text-danger">
+  <div class="modal-header bg-danger text-white">
+    <h5 class="modal-title">
       <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Delete
     </h5>
-    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
-  <div class="modal-body">
-    <p class="mb-0">Are you sure you want to delete <strong>{{ selectedEmployee?.name }}</strong>?</p>
-    <p class="text-muted small mt-2">This action cannot be undone.</p>
+  <div class="modal-body text-center py-4">
+    <i class="bi bi-person-x fs-1 text-danger mb-3"></i>
+    <p class="mb-2">Are you sure you want to delete <strong>{{ selectedEmployee?.name }}</strong>?</p>
+    <p class="text-muted small mb-0">This action cannot be undone.</p>
   </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">
+  <div class="modal-footer justify-content-center">
+    <button type="button" class="btn btn-outline-secondary px-4" (click)="modal.dismiss()">
       <i class="bi bi-x-lg me-2"></i>Cancel
     </button>
-    <button type="button" class="btn btn-danger" (click)="deleteEmployee()">
-      <i class="bi bi-trash me-2"></i>Delete Employee
+    <button type="button" class="btn btn-danger px-4" (click)="deleteEmployee()">
+      <i class="bi bi-trash me-2"></i>Delete
     </button>
   </div>
 </ng-template>

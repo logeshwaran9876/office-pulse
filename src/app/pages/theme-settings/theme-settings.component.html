@@ -1,0 +1,351 @@
+<div class="theme-settings-container">
+    <!-- Toast Notification -->
+   <!-- Toast Notification -->
+    <div class="toast-notification" *ngIf="toastVisible" [class.toast-success]="toastType === 'success'" 
+        [class.toast-error]="toastType === 'error'" [class.toast-info]="toastType === 'info'">
+        <div class="toast-content">
+            <i class="bi" [class.bi-check-circle-fill]="toastType === 'success'"
+            [class.bi-exclamation-triangle-fill]="toastType === 'error'"
+            [class.bi-info-circle-fill]="toastType === 'info'"></i>
+            <span>{{ toastMessage }}</span>
+        </div>
+        <button class="toast-close" (click)="hideToast()">
+            <i class="bi bi-x"></i>
+        </button>
+    </div>
+
+    <!-- Confirmation Dialog -->
+    <div class="confirm-dialog-overlay" *ngIf="showConfirmDialog">
+        <div class="confirm-dialog">
+            <div class="dialog-header">
+                <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                <h3>Confirm Delete</h3>
+            </div>
+            <div class="dialog-body">
+                <p>Are you sure you want to delete the theme <strong>"{{ themeToDelete?.fileName }}"</strong>?</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn-outline-secondary" (click)="cancelDelete()" [disabled]="deleteInProgress">
+                    Cancel
+                </button>
+                <button class="btn-danger" (click)="deleteTheme()" [disabled]="deleteInProgress">
+                    <span *ngIf="!deleteInProgress">Delete</span>
+                    <span *ngIf="deleteInProgress" class="spinner-border spinner-border-sm me-2"></span>
+                    <span *ngIf="deleteInProgress">Deleting...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Menu -->
+    <div class="settings-sidebar">
+        <div class="sidebar-header">
+            <i class="bi bi-palette"></i>
+            <h3>Theme Settings</h3>
+        </div>
+        
+        <div class="event-types-menu">
+            <div class="menu-label">EVENT TYPES</div>
+            
+            <!-- Loading State -->
+            <div *ngIf="isLoadingEventTypes" class="loading-spinner">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+                <span>Loading event types...</span>
+            </div>
+            
+            <!-- No Event Types -->
+            <div *ngIf="!isLoadingEventTypes && eventTypes.length === 0" class="empty-menu">
+                <i class="bi bi-inbox"></i>
+                <p>No event types found</p>
+            </div>
+            
+            <!-- Event Types List -->
+            <div class="menu-items" *ngIf="!isLoadingEventTypes && eventTypes.length > 0">
+                <div *ngFor="let eventType of eventTypes" 
+                     class="menu-item" 
+                     [class.active]="eventType.isActive"
+                     (click)="selectEventType(eventType)">
+                    <div class="item-content">
+                        <i [class]="eventType.icon"></i>
+                        <span class="item-name">{{ eventType.eventType }}</span>
+                    </div>
+                    <span class="item-badge" *ngIf="eventType.count !== undefined">{{ eventType.count }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="sidebar-footer">
+            <i class="bi bi-info-circle"></i>
+            <span>{{ eventTypes.length }} event type(s) available</span>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="settings-content">
+        <!-- Selected Event Type Header -->
+        <div class="content-header" *ngIf="selectedEventType">
+            <div class="header-left">
+                <h2>{{ getSelectedEventTypeName() }} Themes</h2>
+                <span class="badge-count">{{ totalThemes }} theme{{ totalThemes !== 1 ? 's' : '' }}</span>
+            </div>
+            <div class="header-right">
+                <button class="btn-refresh" (click)="loadThemes()" [disabled]="isLoadingThemes" title="Refresh">
+                    <i class="bi bi-arrow-clockwise" [class.spin]="isLoadingThemes"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- No Event Type Selected -->
+        <div class="no-selection" *ngIf="!selectedEventType && !isLoadingEventTypes">
+            <i class="bi bi-palette"></i>
+            <h3>No Event Type Selected</h3>
+            <p>Please select an event type from the sidebar to manage its themes.</p>
+        </div>
+
+        <!-- Selected Event Type Content -->
+        <ng-container *ngIf="selectedEventType">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <h4>
+                    <i class="bi bi-cloud-upload me-2"></i>
+                    Upload New Theme
+                </h4>
+                
+                <form [formGroup]="uploadForm" class="upload-form">
+                    <!-- File Upload Area -->
+                    <div class="upload-area" 
+                         (click)="!isConverting && !isUploading ? fileInput.click() : null"
+                         [class.has-file]="selectedFile !== null"
+                         [class.is-converting]="isConverting"
+                         [class.is-disabled]="isConverting || isUploading">
+                        
+                        <input #fileInput type="file" id="fileInput" 
+                               formControlName="file"
+                               (change)="onFileSelected($event)" 
+                               [disabled]="isConverting || isUploading"
+                               accept="image/*,.pdf,.doc,.docx,.zip"
+                               style="display: none">
+                        
+                        <!-- No File Selected -->
+                        <div class="upload-placeholder" *ngIf="!selectedFile && !isConverting">
+                            <i class="bi bi-cloud-upload"></i>
+                            <p>Click to browse or drag and drop</p>
+                            <small>Any file format (Max 10MB)</small>
+                        </div>
+                        
+                        <!-- File Selected - Pending -->
+                        <div class="file-info pending" *ngIf="selectedFile && !isFileReady && !isConverting">
+                            <i class="bi bi-hourglass-split text-warning"></i>
+                            <div class="file-details">
+                                <span class="file-name">{{ selectedFile.name }}</span>
+                                <span class="file-size">{{ formatFileSize(selectedFile.size) }}</span>
+                                <span class="file-status text-warning">Ready to process</span>
+                            </div>
+                            <button class="btn-remove-file" type="button" 
+                                    (click)="resetFileInput(); $event.stopPropagation()" 
+                                    [disabled]="isConverting">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Converting -->
+                        <div class="file-info converting" *ngIf="isConverting">
+                            <i class="bi bi-arrow-repeat spin"></i>
+                            <div class="file-details">
+                                <span class="file-name">{{ selectedFile?.name }}</span>
+                                <div class="conversion-progress">
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" [style.width.%]="conversionProgress"></div>
+                                    </div>
+                                    <span class="progress-text">Converting... {{ conversionProgress }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- File Ready -->
+                        <div class="file-info ready" *ngIf="selectedFile && isFileReady && !isConverting">
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                            <div class="file-details">
+                                <span class="file-name">{{ selectedFile.name }}</span>
+                                <span class="file-size">{{ formatFileSize(selectedFile.size) }}</span>
+                                <span class="file-status text-success">Ready to upload</span>
+                            </div>
+                            <button class="btn-remove-file" type="button" 
+                                    (click)="resetFileInput(); $event.stopPropagation()">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Upload Options -->
+                    <div class="upload-options" *ngIf="selectedFile">
+                        <label class="checkbox-container">
+                            <input type="checkbox" formControlName="isDefault" [disabled]="!isFileReady || isUploading">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">Set as default theme for {{ selectedEventType.eventType }}</span>
+                        </label>
+                    </div>
+
+                    <!-- Upload Actions -->
+                    <div class="upload-actions">
+                        <!-- No File -->
+                        <div class="upload-status-message" *ngIf="!selectedFile">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Select a file to upload</span>
+                        </div>
+                        
+                        <!-- File Not Processed -->
+                        <div class="upload-status-message" *ngIf="selectedFile && !isFileReady && !isConverting">
+                            <i class="bi bi-hourglass-split text-warning"></i>
+                            <span>Click "Process File" to prepare for upload</span>
+                            <button class="btn-process" type="button" 
+                                    (click)="processSelectedFile()" 
+                                    [disabled]="isConverting">
+                                <i class="bi bi-gear"></i>
+                                Process File
+                            </button>
+                        </div>
+                        
+                        <!-- Ready to Upload -->
+                        <div class="upload-ready" *ngIf="selectedFile && isFileReady && !isUploading">
+                            <button class="btn-upload" type="button" (click)="uploadTheme()">
+                                <i class="bi bi-upload"></i>
+                                Upload Theme
+                            </button>
+                            <span class="ready-indicator">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Ready
+                            </span>
+                        </div>
+                        
+                        <!-- Uploading -->
+                        <div class="uploading-progress" *ngIf="isUploading">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            <span>Uploading theme...</span>
+                        </div>
+                    </div>
+
+                    <!-- File Info Card -->
+                    <div class="file-info-card" *ngIf="selectedFile">
+                        <div class="info-card-header">
+                            <i class="bi bi-file-earmark"></i>
+                            <span>Selected File Details</span>
+                        </div>
+                        <div class="info-card-body">
+                            <div class="info-row">
+                                <span class="info-label">Name:</span>
+                                <span class="info-value">{{ selectedFile.name }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Size:</span>
+                                <span class="info-value">{{ formatFileSize(selectedFile.size) }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Type:</span>
+                                <span class="info-value">{{ selectedFile.type || 'Unknown' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Status:</span>
+                                <span class="info-value" [class.text-warning]="!isFileReady" [class.text-success]="isFileReady">
+                                    <i class="bi" [class.bi-hourglass-split]="!isFileReady" [class.bi-check-circle-fill]="isFileReady"></i>
+                                    {{ isFileReady ? 'Ready for upload' : 'Pending conversion' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Themes Listing -->
+            <div class="themes-section">
+                <div class="section-header">
+                    <h4>
+                        <i class="bi bi-palette me-2"></i>
+                        All Themes
+                    </h4>
+                    <div class="pagination-info" *ngIf="!isLoadingThemes && themes.length > 0">
+                        Showing {{ ((currentPage - 1) * pageSize) + 1 }} - 
+                        {{ min(currentPage * pageSize, totalThemes) }} of {{ totalThemes }}
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div class="loading-state" *ngIf="isLoadingThemes">
+                    <div class="spinner-border" role="status"></div>
+                    <p>Loading themes...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" *ngIf="!isLoadingThemes && themes.length === 0">
+                    <i class="bi bi-palette"></i>
+                    <h4>No Themes Found</h4>
+                    <p>Upload your first theme for {{ selectedEventType.eventType }}</p>
+                </div>
+
+                <!-- Themes Grid -->
+                <div class="themes-grid" *ngIf="!isLoadingThemes && themes.length > 0">
+                    <div class="theme-card" *ngFor="let theme of themes">
+                        <div class="theme-icon" [class.has-preview]="!!theme.previewUrl">
+                            <ng-container *ngIf="theme.previewUrl; else iconTemplate">
+                                <img class="theme-preview-img" [src]="theme.previewUrl" [alt]="theme.fileName">
+                            </ng-container>
+                            <ng-template #iconTemplate>
+                                <i [class]="getFileIcon(theme.fileName)"></i>
+                            </ng-template>
+                        </div>
+                        
+                        <div class="theme-info">
+                            <div class="theme-id">
+                                <span class="label">ID:</span>
+                                <span class="value">{{ theme.id }}</span>
+                            </div>
+                            <div class="theme-name" [title]="theme.fileName">
+                                <span class="label">File:</span>
+                                <span class="value">{{ theme.fileName }}</span>
+                            </div>
+                            
+                            <div class="theme-meta">
+                                <span class="badge-default" *ngIf="theme.isDefault">
+                                    <i class="bi bi-star-fill"></i> Default
+                                </span>
+                                <span class="upload-date" *ngIf="theme.uploadedAt">
+                                    <i class="bi bi-clock"></i>
+                                    {{ formatDate(theme.uploadedAt) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="theme-actions">
+                            <button class="btn-delete" (click)="confirmDelete(theme)" 
+                                    title="Delete Theme"
+                                    [disabled]="isDeleting">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" *ngIf="!isLoadingThemes && totalPages > 1">
+                    <button class="page-btn" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    
+                    <div class="page-numbers">
+                        <button *ngFor="let page of [].constructor(totalPages); let i = index"
+                                class="page-number" 
+                                [class.active]="currentPage === i + 1"
+                                (click)="changePage(i + 1)">
+                            {{ i + 1 }}
+                        </button>
+                    </div>
+                    
+                    <button class="page-btn" [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </ng-container>
+    </div>
+</div>

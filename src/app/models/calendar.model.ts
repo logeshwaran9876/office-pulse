@@ -1,8 +1,8 @@
 export interface CelebrationEvent {
   id: string;
   title: string;
-  type: 'birthday' | 'wedding' | 'work' | 'achievement' | 'event';
-  date: Date;
+  type: string;
+  date: string; // ISO string format from API
   employeeId?: string;
   employeeName?: string;
   department?: string;
@@ -11,11 +11,12 @@ export interface CelebrationEvent {
   color?: string;
 }
 
-export type CalendarView = 'month' | 'week' | 'day' | 'year';
-
 export interface CalendarDay {
-  date: Date;
   day: number;
+  date: Date;
+  dayName?: string;
+  monthName?: string;
+  year?: number;
   isCurrentMonth: boolean;
   isToday: boolean;
   events: CelebrationEvent[];
@@ -33,4 +34,25 @@ export interface CalendarFilter {
   types?: string[];
   startDate?: Date;
   endDate?: Date;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  pagination?: {
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+  };
+}
+
+export type CalendarView = 'month' | 'week' | 'day' | 'year';
+
+export interface EventType {
+  value: string;
+  label: string;
+  icon: string;
+  color: string;
 }

@@ -1,0 +1,31 @@
+﻿.toast-container {
+  z-index: 9999;
+}
+
+.toast {
+  opacity: 1 !important;
+  min-width: 300px;
+  animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Ensure the toast is above everything */
+.position-fixed {
+  z-index: 9999;
+}
+
+/* Fix for Bootstrap icons if not loading */
+.bi {
+  display: inline-block;
+  font-family: "bootstrap-icons", sans-serif;
+}

@@ -56,9 +56,17 @@ export class DashboardComponent implements OnInit {
   }
 
   loadDashboardData() {
-    const employees = this.employeeService.getEmployees();
+  this.employeeService.getEmployees().subscribe((res: any) => {
+
+    const employees = res.data; // backend returns { success, data }
+
     this.stats.totalEmployees = employees.length;
-    this.stats.activeEmployees = employees.filter(e => e.status === 'Active').length;
+
+    this.stats.activeEmployees =
+      employees.filter((e: any) => e.status === 'Active').length;
+
     this.recentEmployees = employees.slice(0, 5);
-  }
+  });
+}
+
 }

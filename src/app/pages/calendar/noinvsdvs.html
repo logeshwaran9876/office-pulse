@@ -1,0 +1,597 @@
+<div class="container-fluid px-4 py-4">
+  <!-- Header with Title and Actions -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+          <h1 class="h2 mb-1 fw-bold text-primary">
+            <i class="bi bi-calendar-event me-2"></i>Celebration Calendar
+          </h1>
+          <p class="text-secondary mb-0">Track birthdays, anniversaries, and office celebrations</p>
+        </div>
+        <div class="mt-2 mt-sm-0">
+          <button class="btn btn-primary me-2" (click)="openAddEventModal(eventModal)">
+            <i class="bi bi-plus-circle me-2"></i>Add Event
+          </button>
+          <button class="btn btn-outline-primary" (click)="goToToday()">
+            <i class="bi bi-calendar-check me-2"></i>Today
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar Controls Row -->
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-3">
+          <div class="d-flex flex-wrap align-items-center gap-3">
+            <!-- Month/Year Display -->
+            <div class="d-flex align-items-center">
+              <button class="btn btn-outline-primary btn-sm me-2" (click)="previousPeriod()">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <h5 class="mb-0 fw-semibold mx-2 text-primary" style="min-width: 200px;">
+                <ng-container *ngIf="currentView === 'month'">{{ monthNames[currentMonth] }} {{ currentYear }}</ng-container>
+                <ng-container *ngIf="currentView === 'week'">Week of {{ currentDate | date:'MMM d, y' }}</ng-container>
+                <ng-container *ngIf="currentView === 'day'">{{ currentDate | date:'fullDate' }}</ng-container>
+                <ng-container *ngIf="currentView === 'year'">{{ currentYear }}</ng-container>
+              </h5>
+              <button class="btn btn-outline-primary btn-sm ms-2" (click)="nextPeriod()">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+
+            <!-- View Toggle -->
+            <div class="btn-group ms-lg-auto" role="group">
+              <button class="btn" 
+                      [class.btn-primary]="currentView === 'month'" 
+                      [class.btn-outline-primary]="currentView !== 'month'" 
+                      (click)="changeView('month')">
+                <i class="bi bi-calendar-month me-1"></i>Month
+              </button>
+              <button class="btn" 
+                      [class.btn-primary]="currentView === 'week'"
+                      [class.btn-outline-primary]="currentView !== 'week'"
+                      (click)="changeView('week')">
+                <i class="bi bi-calendar-week me-1"></i>Week
+              </button>
+              <button class="btn" 
+                      [class.btn-primary]="currentView === 'day'"
+                      [class.btn-outline-primary]="currentView !== 'day'"
+                      (click)="changeView('day')">
+                <i class="bi bi-calendar-day me-1"></i>Day
+              </button>
+              <button class="btn" 
+                      [class.btn-primary]="currentView === 'year'"
+                      [class.btn-outline-primary]="currentView !== 'year'"
+                      (click)="changeView('year')">
+                <i class="bi bi-calendar me-1"></i>Year
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-3">
+          <div class="d-flex gap-2">
+            <div class="input-group">
+              <span class="input-group-text bg-light border-0">
+                <i class="bi bi-search text-primary"></i>
+              </span>
+              <input type="text" 
+                     class="form-control bg-light border-0" 
+                     placeholder="Search celebrations..."
+                     [(ngModel)]="searchTerm"
+                     (input)="applyFilters()">
+            </div>
+            <div class="dropdown" ngbDropdown>
+              <button class="btn btn-outline-primary" ngbDropdownToggle>
+                <i class="bi bi-funnel"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end p-3" style="width: 280px;">
+                <h6 class="dropdown-header px-0 fw-bold text-primary">Filter by Event Type</h6>
+                <div *ngFor="let type of eventTypes; trackBy: trackByEventType" class="dropdown-item px-0">
+                  <div class="form-check">
+                    <input class="form-check-input" 
+                           type="checkbox" 
+                           [id]="'filter-' + type.value"
+                           [checked]="selectedFilterTypes.includes(type.value)"
+                           (change)="toggleFilter(type.value)">
+                    <label class="form-check-label" [for]="'filter-' + type.value">
+                      <span class="me-2">{{ type.icon }}</span>
+                      {{ type.label }}
+                    </label>
+                  </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="d-grid">
+                  <button class="btn btn-sm btn-outline-primary" (click)="clearFilters()">
+                    <i class="bi bi-arrow-repeat me-2"></i>Clear Filters
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Calendar Grid -->
+  <div class="row">
+    <div class="col-lg-9">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-0 p-md-3">
+          <!-- ============== MONTH VIEW ============== -->
+          <ng-container *ngIf="currentView === 'month'">
+            <div class="row g-0">
+              <!-- Weekday Headers -->
+              <div class="col-12">
+                <div class="row g-0 border-bottom">
+                  <div *ngFor="let day of weekDays" class="col p-2 text-center fw-bold bg-light">
+                    {{ day }}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Calendar Days -->
+              <div class="col-12">
+                <div class="row g-0">
+                  <div *ngFor="let day of calendarDays; trackBy: trackByDate" 
+                       class="col p-1 border" 
+                       style="min-height: 120px;"
+                       [class.bg-light]="!day.isCurrentMonth"
+                       [class.bg-primary]="day.isToday"
+                       [class.bg-opacity-10]="day.isToday"
+                       (click)="onDateClick(day.date)">
+                    <div class="d-flex justify-content-between p-1">
+                      <span class="fw-bold">{{ day.day }}</span>
+                      <span *ngIf="day.events.length > 0" class="badge bg-primary rounded-pill">
+                        {{ day.events.length }}
+                      </span>
+                    </div>
+                    
+                    <!-- Events Display -->
+                    <div class="mt-1">
+                      <div *ngFor="let event of day.events.slice(0, 3); trackBy: trackByEventId" 
+                           class="mb-1 p-1 small rounded"
+                           [class.bg-primary]="event.type === 'birthday'"
+                           [class.bg-success]="event.type === 'anniversary'"
+                           [class.bg-warning]="event.type === 'holiday'"
+                           [class.bg-info]="event.type === 'other'"
+                           [class.text-white]="true"
+                           (click)="$event.stopPropagation(); openEventDetailModal(eventDetailModal, event)">
+                        <div class="d-flex align-items-center">
+                          <span class="me-1">{{ getEventIcon(event.type) }}</span>
+                         
+                        </div>
+                      </div>
+                      
+                      <div *ngIf="day.events.length > 3" 
+                           class="text-primary small fw-bold cursor-pointer"
+                           (click)="$event.stopPropagation(); openDayEventsModal(dayEventsModal, day.date, day.events)">
+                        +{{ day.events.length - 3 }} more
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- ============== WEEK VIEW ============== -->
+          <ng-container *ngIf="currentView === 'week'">
+            <div>
+              <div class="row border-bottom mb-2">
+                <div *ngFor="let day of calendarDays; trackBy: trackByDate" class="col p-2 text-center fw-bold">
+                  {{ day.dayName }}, {{ day.date | date:'MMM d' }}
+                </div>
+              </div>
+              <div class="row">
+                <div *ngFor="let day of calendarDays; trackBy: trackByDate" 
+                     class="col p-2 border-end" 
+                     style="min-height: 400px;"
+                     [class.bg-primary]="day.isToday"
+                     [class.bg-opacity-10]="day.isToday"
+                     (click)="onDateClick(day.date)">
+                  <div class="fw-bold mb-2">{{ day.day }}</div>
+                  <div>
+                    <div *ngFor="let event of day.events; trackBy: trackByEventId" 
+                         class="mb-2 p-2 rounded"
+                         [class.bg-primary]="event.type === 'birthday'"
+                         [class.bg-success]="event.type === 'anniversary'"
+                         [class.bg-warning]="event.type === 'holiday'"
+                         [class.bg-info]="event.type === 'other'"
+                         [class.text-white]="true"
+                         (click)="$event.stopPropagation(); openEventDetailModal(eventDetailModal, event)">
+                      <div class="small">
+                        <span class="me-1">{{ getEventIcon(event.type) }}</span>
+                        {{ event.title }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- ============== DAY VIEW ============== -->
+          <ng-container *ngIf="currentView === 'day'">
+            <div>
+              <div *ngFor="let day of calendarDays; trackBy: trackByDate">
+                <div class="mb-4">
+                  <h3 class="text-primary">{{ day?.dayName }}, {{ day?.monthName }} {{ day?.day }}, {{ day?.year }}</h3>
+                </div>
+                <div>
+                  <ng-container *ngIf="day.events.length > 0; else noDayEvents">
+                    <div *ngFor="let event of day.events; trackBy: trackByEventId" 
+                         class="card mb-3 border-start border-4"
+                         [class.border-primary]="event.type === 'birthday'"
+                         [class.border-success]="event.type === 'anniversary'"
+                         [class.border-warning]="event.type === 'holiday'"
+                         [class.border-info]="event.type === 'other'"
+                         (click)="openEventDetailModal(eventDetailModal, event)">
+                      <div class="card-body">
+                        <div class="d-flex align-items-center">
+                          <ng-container *ngIf="event.employeeName">
+                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 48px; height: 48px;">
+                              <span class="fw-bold">{{ getInitials(event.employeeName) }}</span>
+                            </div>
+                          </ng-container>
+                          <div class="flex-grow-1">
+                            <h5 class="card-title mb-1">{{ event.title }}</h5>
+                            <ng-container *ngIf="event.employeeName">
+                              <p class="card-text text-secondary mb-0">
+                                {{ event.employeeName }} • {{ event.department }}
+                              </p>
+                            </ng-container>
+                            <ng-container *ngIf="event.description">
+                              <p class="card-text mt-2">{{ event.description }}</p>
+                            </ng-container>
+                          </div>
+                          <div>
+                            <span class="badge bg-primary">
+                              {{ getEventIcon(event.type) }} {{ event.type }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </ng-container>
+                  <ng-template #noDayEvents>
+                    <div class="text-center py-5">
+                      <i class="bi bi-calendar-x display-4 text-secondary"></i>
+                      <h5 class="mt-3">No events scheduled for this day</h5>
+                      <button class="btn btn-primary mt-3" (click)="openAddEventModal(eventModal, day.date)">
+                        <i class="bi bi-plus-circle me-2"></i>Add Event
+                      </button>
+                    </div>
+                  </ng-template>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- ============== YEAR VIEW ============== -->
+          <ng-container *ngIf="currentView === 'year'">
+            <div class="row g-4">
+              <div *ngFor="let month of monthIndexes" class="col-md-3 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm">
+                  <div class="card-header bg-primary text-white">
+                    <h6 class="fw-bold mb-0 text-white">{{ getMonthName(month) }}</h6>
+                  </div>
+                  <div class="card-body">
+                    <ng-container *ngIf="getYearMonth(month) as monthData">
+                      <ng-container *ngIf="monthData.events.length > 0; else noYearEvents">
+                        <div *ngFor="let event of monthData.events.slice(0, 3); trackBy: trackByEventId" class="d-flex align-items-center mb-2 small">
+                          <span class="me-2">{{ getEventIcon(event.type) }}</span>
+                          <span class="text-truncate">{{ event.title }}</span>
+                        </div>
+                        <ng-container *ngIf="monthData.events.length > 3">
+                          <span class="text-primary small fw-semibold">
+                            +{{ monthData.events.length - 3 }} more
+                          </span>
+                        </ng-container>
+                      </ng-container>
+                    </ng-container>
+                    <ng-template #noYearEvents>
+                      <span class="text-secondary small">No events</span>
+                    </ng-template>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============== UPCOMING EVENTS SIDEBAR ============== -->
+    <div class="col-lg-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0 fw-bold text-white">
+            <i class="bi bi-stars me-2"></i>Upcoming Celebrations
+          </h5>
+        </div>
+        <div class="card-body p-4">
+
+          <!-- Upcoming Events -->
+          <ng-container *ngIf="upcomingEvents().length > 0; else noUpcoming">
+
+            <!-- Show Only 7 by default, toggle all -->
+            <div *ngFor="let event of (showAllUpcoming 
+                            ? upcomingEvents() 
+                            : upcomingEvents().slice(0,7));
+                          trackBy: trackByEventId"
+                 class="d-flex align-items-start mb-4 pb-2 border-bottom">
+
+              <!-- Date Badge -->
+              <div class="me-3">
+                <div class="bg-primary text-white text-center p-2 rounded" style="min-width: 50px;">
+                  <div class="fw-bold">{{ event.date | date:'dd' }}</div>
+                  <div class="small">{{ event.date | date:'MMM' }}</div>
+                </div>
+              </div>
+
+              <!-- Event Info -->
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <span>{{ getEventIcon(event.type) }}</span>
+                  <span class="badge bg-primary">
+                    {{ event.type }}
+                  </span>
+                </div>
+
+                <!-- Employee Name or Title -->
+                <h6 class="mb-0 fw-semibold"
+                    *ngIf="event.employeeName; else upcomingTitle">
+                  {{ event.employeeName }}
+                </h6>
+
+                <small class="text-secondary" *ngIf="event.employeeName">
+                  {{ event.department }}
+                </small>
+
+                <ng-template #upcomingTitle>
+                  <h6 class="mb-0 fw-semibold">{{ event.title }}</h6>
+                </ng-template>
+
+                <!-- Date -->
+                <small class="text-secondary d-block mt-1">
+                  <i class="bi bi-clock me-1"></i>
+                  {{ event.date | date:'EEE, MMM d' }}
+                </small>
+              </div>
+
+              <!-- Detail Button -->
+              <button class="btn btn-sm btn-link text-primary p-0"
+                      (click)="openEventDetailModal(eventDetailModal, event)">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+
+            </div>
+
+            <!-- Show More / Show Less Button -->
+            <button *ngIf="upcomingEvents().length > 7"
+                    class="btn btn-sm btn-outline-primary w-100 mt-2"
+                    (click)="showAllUpcoming = !showAllUpcoming">
+              {{ showAllUpcoming ? 'Show Less ▲' : 'Show More ▼' }}
+            </button>
+
+          </ng-container>
+
+          <!-- No Events -->
+          <ng-template #noUpcoming>
+            <div class="text-center py-4">
+              <i class="bi bi-emoji-smiley fs-1 text-secondary"></i>
+              <p class="text-secondary mt-3 mb-0">No upcoming celebrations</p>
+            </div>
+          </ng-template>
+
+          <!-- View Calendar Button -->
+          <div class="mt-3">
+            <button class="btn btn-outline-primary w-100" (click)="changeView('month')">
+              <i class="bi bi-calendar-check me-2"></i>View Full Calendar
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== MODALS ============== -->
+
+<!-- Add/Edit Event Modal -->
+<ng-template #eventModal let-modal>
+  <div class="modal-header bg-primary text-white">
+    <h5 class="modal-title fw-bold text-white">
+      <i class="bi {{ isEditMode ? 'bi-pencil-square' : 'bi-plus-circle' }} me-2"></i>
+      {{ isEditMode ? 'Edit Celebration Event' : 'Add Celebration Event' }}
+    </h5>
+    <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="eventForm">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label fw-semibold">Event Title</label>
+          <input type="text" class="form-control" formControlName="title" placeholder="e.g., John's Birthday">
+          <div class="text-danger small mt-1" *ngIf="eventForm.get('title')?.invalid && eventForm.get('title')?.touched">Title is required</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Event Type</label>
+          <select class="form-select" formControlName="type">
+            <option value="">Select Type</option>
+            <option *ngFor="let type of eventTypes; trackBy: trackByEventType" [value]="type.value">
+              {{ type.icon }} {{ type.label }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Event Date</label>
+          <input type="date" class="form-control" formControlName="date">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Employee Name</label>
+          <input type="text" class="form-control" formControlName="employeeName" placeholder="Full name">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Department</label>
+          <input type="text" class="form-control" formControlName="department" placeholder="Department">
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold">Description</label>
+          <textarea class="form-control" formControlName="description" rows="3" placeholder="Event description..."></textarea>
+        </div>
+        <input type="hidden" formControlName="employeeId">
+        <input type="hidden" formControlName="id">
+        <input type="hidden" formControlName="profileImage">
+        <input type="hidden" formControlName="color">
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">
+      <i class="bi bi-x-lg me-2"></i>Cancel
+    </button>
+    <button *ngIf="isEditMode" type="button" class="btn btn-danger" 
+            (click)="deleteEvent(eventForm.get('id')?.value); modal.dismiss()">
+      <i class="bi bi-trash me-2"></i>Delete
+    </button>
+    <button type="button" class="btn btn-primary" (click)="saveEvent()" [disabled]="eventForm.invalid">
+      <i class="bi {{ isEditMode ? 'bi-check-lg' : 'bi-plus-circle' }} me-2"></i>
+      {{ isEditMode ? 'Update Event' : 'Save Event' }}
+    </button>
+  </div>
+</ng-template>
+
+<!-- Event Detail Modal -->
+<ng-template #eventDetailModal let-modal>
+  <ng-container *ngIf="selectedEvent()">
+    <div class="modal-header bg-primary text-white">
+      <div class="d-flex align-items-center">
+        <div class="me-3">
+          <span class="fs-2">{{ getEventIcon(selectedEvent()?.type || '') }}</span>
+        </div>
+        <div>
+          <h5 class="modal-title fw-bold text-white">{{ selectedEvent()?.title }}</h5>
+          <span class="badge bg-light text-primary">
+            {{ selectedEvent()?.type }}
+          </span>
+        </div>
+      </div>
+      <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+      <ng-container *ngIf="selectedEvent()?.employeeName">
+        <div class="bg-light p-4 rounded mb-4">
+          <div class="d-flex align-items-center">
+            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                 style="width: 64px; height: 64px;">
+              <span class="fs-4">{{ getInitials(selectedEvent()?.employeeName || '') }}</span>
+            </div>
+            <div>
+              <h4 class="mb-1 fw-bold">{{ selectedEvent()?.employeeName }}</h4>
+              <p class="text-secondary mb-0">{{ selectedEvent()?.department }}</p>
+              <p class="mb-0 mt-1">
+                <span class="badge bg-light text-primary">
+                  Employee ID: {{ selectedEvent()?.employeeId }}
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div>
+            <small class="text-secondary d-block">Date</small>
+            <strong>{{ selectedEvent()?.date | date:'EEEE, MMMM d, y' }}</strong>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div>
+            <small class="text-secondary d-block">Time</small>
+            <strong>All Day Event</strong>
+          </div>
+        </div>
+        <ng-container *ngIf="selectedEvent()?.description">
+          <div class="col-12 mt-3">
+            <div>
+              <small class="text-secondary d-block">Description</small>
+              <p class="mb-0">{{ selectedEvent()?.description }}</p>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">
+        <i class="bi bi-x-lg me-2"></i>Close
+      </button>
+      <button type="button" class="btn btn-outline-primary" 
+              (click)="modal.dismiss(); openEditEventModal(eventModal, selectedEvent()!)">
+        <i class="bi bi-pencil me-2"></i>Edit Event
+      </button>
+    </div>
+  </ng-container>
+</ng-template>
+
+<!-- Day Events Modal -->
+<ng-template #dayEventsModal let-modal>
+  <div class="modal-header bg-primary text-white">
+    <h5 class="modal-title fw-bold text-white">
+      <i class="bi bi-calendar-day me-2"></i>
+      Events for {{ selectedDate() | date:'fullDate' }}
+    </h5>
+    <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="list-group" *ngIf="selectedDayEvents().length > 0">
+      <div *ngFor="let event of selectedDayEvents(); trackBy: trackByEventId" class="list-group-item list-group-item-action mb-3 border">
+        <div class="d-flex align-items-center">
+          <ng-container *ngIf="event.employeeName">
+            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" 
+                 style="width: 40px; height: 40px;">
+              <span class="fw-bold">{{ getInitials(event.employeeName) }}</span>
+            </div>
+          </ng-container>
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="badge bg-primary">
+                {{ getEventIcon(event.type) }} {{ event.type }}
+              </span>
+            </div>
+            <h6 class="mb-1 fw-semibold">{{ event.title }}</h6>
+            <small class="text-secondary d-block" *ngIf="event.employeeName">
+              {{ event.employeeName }} • {{ event.department }}
+            </small>
+          </div>
+          <button class="btn btn-sm btn-outline-primary ms-2" 
+                  (click)="modal.dismiss(); openEventDetailModal(eventDetailModal, event)">
+            <i class="bi bi-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">
+      Close
+    </button>
+    <button type="button" class="btn btn-primary" 
+            (click)="modal.dismiss(); openAddEventModal(eventModal, selectedDate() ?? undefined)">
+      <i class="bi bi-plus-circle me-2"></i>Add Event
+    </button>
+  </div>
+</ng-template>

@@ -1,0 +1,178 @@
+﻿<div class="modal fade" id="eventSettingsModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="eventModalLabel">
+          <i [class]="isEdit ? 'bi bi-pencil-square' : 'bi bi-plus-circle'" class="me-2"></i>
+          {{ isEdit ? 'Edit Event Type' : 'Add New Event Type' }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form [formGroup]="eventForm" (ngSubmit)="onSubmit()">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">
+              <i class="bi bi-tag me-2 text-teal"></i>Event Type
+            </label>
+            <input 
+              *ngIf="!isEdit"
+              type="text" 
+              class="form-control" 
+              formControlName="type"
+              placeholder="e.g., Birthday, Conference, etc."
+              [class.is-invalid]="type?.invalid && type?.touched">
+            <select 
+              *ngIf="isEdit"
+              class="form-select" 
+              formControlName="type"
+              [class.is-invalid]="type?.invalid && type?.touched"
+              [disabled]="isEdit">
+              <option value="">Select event type</option>
+              <option *ngFor="let eventType of eventTypes" [value]="eventType">{{ eventType }}</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="type?.invalid && type?.touched">
+              <span *ngIf="type?.errors?.['required']">Event type is required</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label d-block">
+              <i class="bi bi-arrow-repeat me-2 text-teal"></i>Recurring Support
+            </label>
+            <div class="recurring-toggle">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" formControlName="isRecurring">
+                <label class="form-check-label">
+                  {{ eventForm.get('isRecurring')?.value ? 'Yearly recurring event' : 'One-time event' }}
+                </label>
+              </div>
+              <div class="toggle-hint" *ngIf="eventForm.get('isRecurring')?.value">
+                <i class="bi bi-info-circle"></i>
+                Event will repeat automatically each year
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">
+                <i class="bi bi-calendar-minus me-2 text-teal"></i>Passive Start Days
+              </label>
+              <input 
+                type="number" 
+                class="form-control" 
+                formControlName="passiveStartDays"
+                [class.is-invalid]="passiveStartDays?.invalid && passiveStartDays?.touched">
+              <small class="text-muted">Days before event</small>
+              <div class="invalid-feedback" *ngIf="passiveStartDays?.invalid && passiveStartDays?.touched">
+                <span *ngIf="passiveStartDays?.errors?.['required']">Required</span>
+                <span *ngIf="passiveStartDays?.errors?.['min']">Cannot be negative</span>
+                <span *ngIf="passiveStartDays?.errors?.['max']">Maximum 365 days</span>
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">
+                <i class="bi bi-calendar-plus me-2 text-teal"></i>Passive End Days
+              </label>
+              <input 
+                type="number" 
+                class="form-control" 
+                formControlName="passiveEndDays"
+                [class.is-invalid]="passiveEndDays?.invalid && passiveEndDays?.touched">
+              <small class="text-muted">Days after event</small>
+              <div class="invalid-feedback" *ngIf="passiveEndDays?.invalid && passiveEndDays?.touched">
+                <span *ngIf="passiveEndDays?.errors?.['required']">Required</span>
+                <span *ngIf="passiveEndDays?.errors?.['min']">Cannot be negative</span>
+                <span *ngIf="passiveEndDays?.errors?.['max']">Maximum 365 days</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="alert alert-warning" *ngIf="eventForm.errors?.['rangeInvalid']">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            End days must be greater than or equal to start days
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">
+                <i class="bi bi-clock me-2 text-teal"></i>Default Start Time
+              </label>
+              <input 
+                type="time" 
+                class="form-control" 
+                formControlName="defaultStartTime"
+                [class.is-invalid]="defaultStartTime?.invalid && defaultStartTime?.touched">
+              <div class="invalid-feedback" *ngIf="defaultStartTime?.invalid && defaultStartTime?.touched">
+                Start time is required
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label">
+                <i class="bi bi-clock-history me-2 text-teal"></i>Default End Time
+              </label>
+              <input 
+                type="time" 
+                class="form-control" 
+                formControlName="defaultEndTime"
+                [class.is-invalid]="defaultEndTime?.invalid && defaultEndTime?.touched">
+              <div class="invalid-feedback" *ngIf="defaultEndTime?.invalid && defaultEndTime?.touched">
+                End time is required
+              </div>
+            </div>
+          </div>
+
+          <div class="alert alert-warning" *ngIf="eventForm.errors?.['timeInvalid']">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            End time must be after start time
+          </div>
+
+          <div class="preview-section" *ngIf="eventForm.valid">
+            <h6 class="preview-title">
+              <i class="bi bi-eye me-2"></i>Preview
+            </h6>
+            <div class="preview-content">
+              <div class="preview-item">
+                <span class="preview-label">Event:</span>
+                <span class="preview-value">{{ eventForm.get('type')?.value || 'Not set' }}</span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-label">Recurring:</span>
+                <span class="preview-value">
+                  {{ eventForm.get('isRecurring')?.value ? 'Yes (Yearly)' : 'No' }}
+                </span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-label">Active Period:</span>
+                <span class="preview-value">
+                  {{ eventForm.get('passiveStartDays')?.value || 0 }} days before to 
+                  {{ eventForm.get('passiveEndDays')?.value || 0 }} days after
+                </span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-label">Default Time:</span>
+                <span class="preview-value">
+                  {{ eventForm.get('defaultStartTime')?.value || '00:00' }} - 
+                  {{ eventForm.get('defaultEndTime')?.value || '00:00' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="eventForm.invalid">
+            <i [class]="isEdit ? 'bi bi-check-circle' : 'bi bi-plus-circle'" class="me-2"></i>
+            {{ isEdit ? 'Update Event' : 'Add Event' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

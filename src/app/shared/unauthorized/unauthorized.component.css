@@ -1,0 +1,31 @@
+﻿:host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+}
+
+.unauthorized-card {
+  text-align: center;
+  padding: 2rem 2.5rem;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.unauthorized-card h1 {
+  margin-bottom: 0.5rem;
+  font-size: 2.2rem;
+}
+
+.unauthorized-card .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  margin-top: 1rem;
+  border-radius: 999px;
+  background: #007bff;
+  color: #fff;
+  text-decoration: none;
+}

@@ -4,16 +4,14 @@
     <div class="col-12">
       <div class="d-flex justify-content-between align-items-center flex-wrap">
         <div>
-          <h1 class="h2 mb-1 fw-bold text-teal-800">
+          <h1 class="h2 mb-1 fw-bold text-primary">
             <i class="bi bi-calendar-event me-2"></i>Celebration Calendar
           </h1>
-          <p class="text-muted mb-0">Track birthdays, anniversaries, and office celebrations</p>
+          <p class="text-secondary mb-0">Track birthdays, anniversaries, and office celebrations</p>
         </div>
         <div class="mt-2 mt-sm-0">
-          <button class="btn btn-teal me-2" (click)="openAddEventModal(eventModal)">
-            <i class="bi bi-plus-circle me-2"></i>Add Event
-          </button>
-          <button class="btn btn-outline-teal" (click)="goToToday()">
+       
+          <button class="btn btn-outline-primary" (click)="goToToday()">
             <i class="bi bi-calendar-check me-2"></i>Today
           </button>
         </div>
@@ -24,26 +22,21 @@
   <!-- Calendar Controls Row -->
   <div class="row mb-4">
     <div class="col-lg-8">
-      <div class="card border-0 shadow-sm rounded-4">
+      <div class="card border-0 shadow-sm">
         <div class="card-body p-3">
           <div class="d-flex flex-wrap align-items-center gap-3">
             <!-- Month/Year Display -->
             <div class="d-flex align-items-center">
-              <button class="btn btn-outline-teal btn-sm me-2" (click)="previousPeriod()">
+              <button class="btn btn-outline-primary btn-sm me-2" (click)="previousPeriod()">
                 <i class="bi bi-chevron-left"></i>
               </button>
-              <h5 class="mb-0 fw-semibold mx-2" style="min-width: 200px;">
-                @if (currentView === 'month') {
-                  {{ monthNames[currentMonth] }} {{ currentYear }}
-                } @else if (currentView === 'week') {
-                  Week of {{ currentDate | date:'MMM d, y' }}
-                } @else if (currentView === 'day') {
-                  {{ currentDate | date:'fullDate' }}
-                } @else if (currentView === 'year') {
-                  {{ currentYear }}
-                }
+              <h5 class="mb-0 fw-semibold mx-2 text-primary" style="min-width: 200px;">
+                <ng-container *ngIf="currentView === 'month'">{{ monthNames[currentMonth] }} {{ currentYear }}</ng-container>
+                <ng-container *ngIf="currentView === 'week'">Week of {{ currentDate | date:'MMM d, y' }}</ng-container>
+                <ng-container *ngIf="currentView === 'day'">{{ currentDate | date:'fullDate' }}</ng-container>
+                <ng-container *ngIf="currentView === 'year'">{{ currentYear }}</ng-container>
               </h5>
-              <button class="btn btn-outline-teal btn-sm ms-2" (click)="nextPeriod()">
+              <button class="btn btn-outline-primary btn-sm ms-2" (click)="nextPeriod()">
                 <i class="bi bi-chevron-right"></i>
               </button>
             </div>
@@ -51,26 +44,26 @@
             <!-- View Toggle -->
             <div class="btn-group ms-lg-auto" role="group">
               <button class="btn" 
-                      [class.btn-teal]="currentView === 'month'"
-                      [class.btn-outline-teal]="currentView !== 'month'"
+                      [class.btn-primary]="currentView === 'month'" 
+                      [class.btn-outline-primary]="currentView !== 'month'" 
                       (click)="changeView('month')">
                 <i class="bi bi-calendar-month me-1"></i>Month
               </button>
               <button class="btn" 
-                      [class.btn-teal]="currentView === 'week'"
-                      [class.btn-outline-teal]="currentView !== 'week'"
+                      [class.btn-primary]="currentView === 'week'"
+                      [class.btn-outline-primary]="currentView !== 'week'"
                       (click)="changeView('week')">
                 <i class="bi bi-calendar-week me-1"></i>Week
               </button>
               <button class="btn" 
-                      [class.btn-teal]="currentView === 'day'"
-                      [class.btn-outline-teal]="currentView !== 'day'"
+                      [class.btn-primary]="currentView === 'day'"
+                      [class.btn-outline-primary]="currentView !== 'day'"
                       (click)="changeView('day')">
                 <i class="bi bi-calendar-day me-1"></i>Day
               </button>
               <button class="btn" 
-                      [class.btn-teal]="currentView === 'year'"
-                      [class.btn-outline-teal]="currentView !== 'year'"
+                      [class.btn-primary]="currentView === 'year'"
+                      [class.btn-outline-primary]="currentView !== 'year'"
                       (click)="changeView('year')">
                 <i class="bi bi-calendar me-1"></i>Year
               </button>
@@ -82,12 +75,12 @@
 
     <!-- Search and Filters -->
     <div class="col-lg-4">
-      <div class="card border-0 shadow-sm rounded-4">
+      <div class="card border-0 shadow-sm">
         <div class="card-body p-3">
           <div class="d-flex gap-2">
             <div class="input-group">
               <span class="input-group-text bg-light border-0">
-                <i class="bi bi-search text-teal"></i>
+                <i class="bi bi-search text-primary"></i>
               </span>
               <input type="text" 
                      class="form-control bg-light border-0" 
@@ -96,29 +89,27 @@
                      (input)="applyFilters()">
             </div>
             <div class="dropdown" ngbDropdown>
-              <button class="btn btn-outline-teal" ngbDropdownToggle>
+              <button class="btn btn-outline-primary" ngbDropdownToggle>
                 <i class="bi bi-funnel"></i>
               </button>
               <div class="dropdown-menu dropdown-menu-end p-3" style="width: 280px;">
-                <h6 class="dropdown-header px-0 fw-bold">Filter by Event Type</h6>
-                @for (type of eventTypes; track type.value) {
-                  <div class="dropdown-item px-0">
-                    <div class="form-check">
-                      <input class="form-check-input" 
-                             type="checkbox" 
-                             [id]="'filter-' + type.value"
-                             [checked]="selectedFilterTypes.includes(type.value)"
-                             (change)="toggleFilter(type.value)">
-                      <label class="form-check-label" [for]="'filter-' + type.value">
-                        <span class="me-2">{{ type.icon }}</span>
-                        {{ type.label }}
-                      </label>
-                    </div>
+                <h6 class="dropdown-header px-0 fw-bold text-primary">Filter by Event Type</h6>
+                <div *ngFor="let type of eventTypes; trackBy: trackByEventType" class="dropdown-item px-0">
+                  <div class="form-check">
+                    <input class="form-check-input" 
+                           type="checkbox" 
+                           [id]="'filter-' + type.value"
+                           [checked]="selectedFilterTypes.includes(type.value)"
+                           (change)="toggleFilter(type.value)">
+                    <label class="form-check-label" [for]="'filter-' + type.value">
+                      <span class="me-2">{{ type.icon }}</span>
+                      {{ type.label }}
+                    </label>
                   </div>
-                }
+                </div>
                 <div class="dropdown-divider"></div>
                 <div class="d-grid">
-                  <button class="btn btn-sm btn-outline-teal" (click)="clearFilters()">
+                  <button class="btn btn-sm btn-outline-primary" (click)="clearFilters()">
                     <i class="bi bi-arrow-repeat me-2"></i>Clear Filters
                   </button>
                 </div>
@@ -135,256 +126,284 @@
     <div class="col-lg-9">
       <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-0 p-md-3">
-          <!-- Month View -->
-          @if (currentView === 'month') {
+          <!-- ============== MONTH VIEW ============== -->
+          <ng-container *ngIf="currentView === 'month'">
             <div class="calendar-grid">
               <!-- Weekday Headers -->
               <div class="calendar-weekdays">
-                @for (day of weekDays; track day) {
-                  <div class="weekday-cell">{{ day }}</div>
-                }
+                <div *ngFor="let day of weekDays" class="weekday-cell">{{ day }}</div>
               </div>
               
               <!-- Calendar Days -->
               <div class="calendar-days">
-                @for (day of calendarDays; track day.date) {
-                  <div class="day-cell" 
-                       [class.other-month]="!day.isCurrentMonth"
-                       [class.today]="day.isToday"
-                       (click)="onDateClick(eventDetailModal, day.date)">
-                    <div class="day-header">
-                      <span class="day-number">{{ day.day }}</span>
-                      @if (day.events.length > 0) {
-                        <span class="event-badge">{{ day.events.length }}</span>
-                      }
-                    </div>
-                    
-                    <!-- Events Display -->
-                    <div class="day-events">
-                      @for (event of day.events.slice(0, 3); track event.id) {
-                        <div class="event-item" 
-                             [class]="'border-' + getEventColor(event.type)"
-                             (click)="$event.stopPropagation(); openEventDetailModal(eventDetailModal, event)">
-                          
-                          @if (event.employeeName) {
-                            <div class="d-flex align-items-center gap-2">
-                              <!-- Avatar with Initials -->
-                              <div class="event-avatar" 
-                                   [class]="'bg-teal-soft'">
-                                {{ getInitials(event.employeeName) }}
-                              </div>
-                              <div class="event-info">
-                                <span class="event-name">{{ event.employeeName.split(' ')[0] }}</span>
-                                <span class="event-icon ms-1">{{ getEventIcon(event.type) }}</span>
-                              </div>
-                            </div>
-                          } @else {
-                            <div class="d-flex align-items-center">
-                              <span class="event-icon me-1">{{ getEventIcon(event.type) }}</span>
-                              <span class="event-title">{{ event.title }}</span>
-                            </div>
-                          }
-                        </div>
-                      }
-                      
-                      @if (day.events.length > 3) {
-                        <div class="more-events" 
-                             (click)="$event.stopPropagation(); openEventDetailModal(eventDetailModal, day)">
-                          +{{ day.events.length - 3 }} more
-                        </div>
-                      }
-                    </div>
+                <div *ngFor="let day of calendarDays; trackBy: trackByDate" class="day-cell" 
+                     [class.other-month]="!day.isCurrentMonth"
+                     [class.today]="day.isToday"
+                     (click)="onDateClick(day.date)">
+                  <div class="day-header">
+                    <span class="day-number">{{ day.day }}</span>
+                    <span *ngIf="day.events.length > 0" class="event-badge">{{ day.events.length }}</span>
                   </div>
-                }
-              </div>
-            </div>
-          }
-
-          <!-- Week View -->
-          @if (currentView === 'week') {
-            <div class="week-view">
-              <div class="calendar-weekdays mb-2">
-                @for (day of calendarDays; track day.date) {
-                  <div class="weekday-cell">{{ day.dayName }}, {{ day.date | date:'MMM d' }}</div>
-                }
-              </div>
-              <div class="week-grid">
-                @for (day of calendarDays; track day.date) {
-                  <div class="week-day-cell" 
-                       [class.today]="day.isToday"
-                       (click)="onDateClick(eventDetailModal, day.date)">
-                    <div class="day-header">
-                      <span class="day-number">{{ day.day }}</span>
-                    </div>
-                    <div class="day-events">
-                      @for (event of day.events; track event.id) {
-                        <div class="event-item p-2" 
-                             [class]="'bg-' + getEventColor(event.type) + '-soft'">
-                          <div class="d-flex align-items-center">
-                            <span class="event-icon me-2">{{ getEventIcon(event.type) }}</span>
-                            <span class="event-title small">{{ event.title }}</span>
+                  
+                  <!-- Events Display -->
+                  <div class="day-events">
+                    <div *ngFor="let event of day.events.slice(0, 3); trackBy: trackByEventId" 
+                         class="event-item border-start border-4" 
+                         [ngClass]="'border-' + getEventColor(event.type)"
+                         (click)="$event.stopPropagation(); openEventDetailModal(eventDetailModal, event)">
+                      <ng-container *ngIf="event.employeeName; else eventTitleOnly">
+                        <div class="d-flex align-items-center gap-2">
+                          <ng-container *ngIf="event.profileImage; else initialsAvatar">
+                            <img [src]="event.profileImage" class="event-avatar-img" 
+                                 alt="{{ event.employeeName }}">
+                          </ng-container>
+                          <ng-template #initialsAvatar>
+                            <div class="event-avatar bg-primary-soft">
+                              {{ getInitials(event.employeeName) }}
+                            </div>
+                          </ng-template>
+                          <div class="event-info">
+                            <span class="event-name">{{ event.employeeName.split(' ')[0] }}</span>
+                            <span class="event-icon ms-1">{{ getEventIcon(event.type) }}</span>
                           </div>
                         </div>
-                      }
+                      </ng-container>
+                      <ng-template #eventTitleOnly>
+                        <div class="d-flex align-items-center">
+                          <span class="event-icon me-1">{{ getEventIcon(event.type) }}</span>
+                          <span class="event-title">{{ event.title }}</span>
+                        </div>
+                      </ng-template>
+                    </div>
+                    
+                    <div *ngIf="day.events.length > 3" class="more-events" 
+                         (click)="$event.stopPropagation(); openDayEventsModal(dayEventsModal, day.date, day.events)">
+                      +{{ day.events.length - 3 }} more
                     </div>
                   </div>
-                }
+                </div>
               </div>
             </div>
-          }
+          </ng-container>
 
-          <!-- Day View -->
-          @if (currentView === 'day') {
+          <!-- ============== WEEK VIEW ============== -->
+          <ng-container *ngIf="currentView === 'week'">
+            <div class="week-view">
+              <div class="calendar-weekdays mb-2">
+                <div *ngFor="let day of calendarDays; trackBy: trackByDate" class="weekday-cell">
+                  {{ day.dayName }}, {{ day.date | date:'MMM d' }}
+                </div>
+              </div>
+              <div class="week-grid">
+                <div *ngFor="let day of calendarDays; trackBy: trackByDate" class="week-day-cell" 
+                     [class.today]="day.isToday" 
+                     (click)="onDateClick(day.date)">
+                  <div class="day-header">
+                    <span class="day-number">{{ day.day }}</span>
+                  </div>
+                  <div class="day-events">
+                    <div *ngFor="let event of day.events; trackBy: trackByEventId" class="event-item p-2" 
+                         [ngClass]="'bg-' + getEventColor(event.type) + '-soft'"
+                         (click)="$event.stopPropagation(); openEventDetailModal(eventDetailModal, event)">
+                      <div class="d-flex align-items-center">
+                        <span class="event-icon me-2">{{ getEventIcon(event.type) }}</span>
+                        <span class="event-title small">{{ event.title }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- ============== DAY VIEW ============== -->
+          <ng-container *ngIf="currentView === 'day'">
             <div class="day-view">
-              @for (day of calendarDays; track day.date) {
+              <div *ngFor="let day of calendarDays; trackBy: trackByDate">
                 <div class="day-header-large">
-                  <h3>{{ day.dayName }}, {{ day.monthName }} {{ day.day }}, {{ day.year }}</h3>
+                  <h3 class="text-primary-gradient">{{ day?.dayName }}, {{ day?.monthName }} {{ day?.day }}, {{ day?.year }}</h3>
                 </div>
                 <div class="day-timeline">
-                  @if (day.events.length > 0) {
-                    @for (event of day.events; track event.id) {
-                      <div class="timeline-event card mb-3" 
-                           [class]="'border-' + getEventColor(event.type) + ' border-start border-4'">
-                        <div class="card-body">
-                          <div class="d-flex align-items-center">
-                            @if (event.employeeName) {
-                              <div class="event-avatar-large me-3 bg-teal-soft">
+                  <ng-container *ngIf="day.events.length > 0; else noDayEvents">
+                    <div *ngFor="let event of day.events; trackBy: trackByEventId" 
+                         class="timeline-event card mb-3"
+                         [ngClass]="'border-' + getEventColor(event.type) + ' border-start border-4'"
+                         (click)="openEventDetailModal(eventDetailModal, event)">
+                      <div class="card-body">
+                        <div class="d-flex align-items-center">
+                          <ng-container *ngIf="event.employeeName">
+                            <ng-container *ngIf="event.profileImage; else dayInitialsAvatar">
+                              <img [src]="event.profileImage" class="event-avatar-large me-3" 
+                                   alt="{{ event.employeeName }}">
+                            </ng-container>
+                            <ng-template #dayInitialsAvatar>
+                              <div class="event-avatar-large me-3 bg-primary-soft">
                                 {{ getInitials(event.employeeName) }}
                               </div>
-                            }
-                            <div class="flex-grow-1">
-                              <h5 class="card-title mb-1">{{ event.title }}</h5>
-                              @if (event.employeeName) {
-                                <p class="card-text text-muted mb-0">
-                                  {{ event.employeeName }} • {{ event.department }}
-                                </p>
-                              }
-                              @if (event.description) {
-                                <p class="card-text mt-2">{{ event.description }}</p>
-                              }
-                            </div>
-                            <div>
-                              <span class="badge" [class]="'bg-' + getEventColor(event.type)">
-                                {{ getEventIcon(event.type) }} {{ event.type }}
-                              </span>
-                            </div>
+                            </ng-template>
+                          </ng-container>
+                          <div class="flex-grow-1">
+                            <h5 class="card-title mb-1">{{ event.title }}</h5>
+                            <ng-container *ngIf="event.employeeName">
+                              <p class="card-text text-muted mb-0">
+                                {{ event.employeeName }} • {{ event.department }}
+                              </p>
+                            </ng-container>
+                            <ng-container *ngIf="event.description">
+                              <p class="card-text mt-2">{{ event.description }}</p>
+                            </ng-container>
+                          </div>
+                          <div>
+                            <span class="badge" [ngClass]="'bg-' + getEventColor(event.type)">
+                              {{ getEventIcon(event.type) }} {{ event.type }}
+                            </span>
                           </div>
                         </div>
                       </div>
-                    }
-                  } @else {
+                    </div>
+                  </ng-container>
+                  <ng-template #noDayEvents>
                     <div class="text-center py-5">
                       <i class="bi bi-calendar-x display-4 text-muted"></i>
                       <h5 class="mt-3">No events scheduled for this day</h5>
-                      <button class="btn btn-teal mt-3" (click)="openAddEventModal(eventModal, day.date)">
-                        <i class="bi bi-plus-circle me-2"></i>Add Event
-                      </button>
+                     
                     </div>
-                  }
+                  </ng-template>
                 </div>
-              }
+              </div>
             </div>
-          }
+          </ng-container>
 
-          <!-- Year View -->
-          @if (currentView === 'year') {
+          <!-- ============== YEAR VIEW ============== -->
+          <ng-container *ngIf="currentView === 'year'">
             <div class="year-view">
               <div class="row g-4">
-                @for (month of [0,1,2,3,4,5,6,7,8,9,10,11]; track month) {
-                  <div class="col-md-3 col-sm-6">
-                    <div class="year-month-card">
-                      <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-header bg-transparent border-0">
-                          <h6 class="fw-bold text-teal-800 mb-0">{{ getMonthName(month) }}</h6>
-                        </div>
-                        <div class="card-body">
-                          @if (calendarDays[month]?.events?.length > 0) {
-                            @for (event of calendarDays[month]?.events?.slice(0, 3); track event.id) {
-                              <div class="d-flex align-items-center mb-2 small">
-                                <span class="event-icon me-2">{{ getEventIcon(event.type) }}</span>
-                                <span class="text-truncate">{{ event.title }}</span>
-                              </div>
-                            }
-                            @if (calendarDays[month]?.events?.length > 3) {
-                              <span class="text-teal small">
-                                +{{ calendarDays[month]?.events?.length - 3 }} more
+                <div *ngFor="let month of monthIndexes" class="col-md-3 col-sm-6">
+                  <div class="year-month-card">
+                    <div class="card h-100 border-0 shadow-sm">
+                      <div class="card-header bg-primary-gradient text-white border-0">
+                        <h6 class="fw-bold mb-0 text-white">{{ getMonthName(month) }}</h6>
+                      </div>
+                      <div class="card-body">
+                        <ng-container *ngIf="getYearMonth(month) as monthData">
+                          <ng-container *ngIf="monthData.events.length > 0; else noYearEvents">
+                            <div *ngFor="let event of monthData.events.slice(0, 3); trackBy: trackByEventId" class="d-flex align-items-center mb-2 small">
+                              <span class="event-icon me-2">{{ getEventIcon(event.type) }}</span>
+                              <span class="text-truncate">{{ event.title }}</span>
+                            </div>
+                            <ng-container *ngIf="monthData.events.length > 3">
+                              <span class="text-primary-600 small fw-semibold">
+                                +{{ monthData.events.length - 3 }} more
                               </span>
-                            }
-                          } @else {
-                            <span class="text-muted small">No events</span>
-                          }
-                        </div>
+                            </ng-container>
+                          </ng-container>
+                        </ng-container>
+                        <ng-template #noYearEvents>
+                          <span class="text-muted small">No events</span>
+                        </ng-template>
                       </div>
                     </div>
                   </div>
-                }
+                </div>
               </div>
             </div>
-          }
+          </ng-container>
         </div>
       </div>
     </div>
 
-    <!-- Upcoming Events Sidebar -->
+    <!-- ============== UPCOMING EVENTS SIDEBAR ============== -->
     <div class="col-lg-3">
       <div class="card border-0 shadow-sm rounded-4 h-100">
-        <div class="card-header bg-transparent border-0 pt-4 px-4">
-          <h5 class="card-title mb-0 fw-bold text-teal-800">
+        <div class="card-header   border-0 pt-4 px-4">
+          <h5 class="card-title mb-0 fw-bold ">
             <i class="bi bi-stars me-2"></i>Upcoming Celebrations
           </h5>
         </div>
         <div class="card-body p-4">
-          @if (upcomingEvents().length > 0) {
-            @for (event of upcomingEvents(); track event.id) {
-              <div class="upcoming-event-item d-flex align-items-start mb-4 pb-2 border-bottom">
-                <!-- Date Badge -->
-                <div class="date-badge me-3">
-                  <div class="date-badge-inner bg-teal-soft rounded-3 text-center">
-                    <span class="day">{{ event.date | date:'dd' }}</span>
-                    <span class="month">{{ event.date | date:'MMM' }}</span>
-                  </div>
+
+          <!-- Upcoming Events -->
+          <ng-container *ngIf="upcomingEvents().length > 0; else noUpcoming">
+
+            <!-- Show Only 7 by default, toggle all -->
+            <div *ngFor="let event of (showAllUpcoming 
+                            ? upcomingEvents() 
+                            : upcomingEvents().slice(0,7));
+                          trackBy: trackByEventId"
+                 class="upcoming-event-item d-flex align-items-start mb-4 pb-2 border-bottom">
+
+              <!-- Date Badge -->
+              <div class="date-badge me-3">
+                <div class="date-badge-inner bg-primary-gradient text-center">
+                  <span class="day">{{ event.date | date:'dd' }}</span>
+                  <span class="month">{{ event.date | date:'MMM' }}</span>
                 </div>
-                
-                <!-- Event Info -->
-                <div class="flex-grow-1">
-                  <div class="d-flex align-items-center gap-2 mb-1">
-                    <span class="event-icon-small">{{ getEventIcon(event.type) }}</span>
-                    <span class="badge" [class]="'bg-' + getEventColor(event.type) + '-soft text-' + getEventColor(event.type)">
-                      {{ event.type }}
-                    </span>
-                  </div>
-                  
-                  @if (event.employeeName) {
-                    <h6 class="mb-0 fw-semibold">{{ event.employeeName }}</h6>
-                    <small class="text-muted">{{ event.department }}</small>
-                  } @else {
-                    <h6 class="mb-0 fw-semibold">{{ event.title }}</h6>
-                  }
-                  
-                  <small class="text-muted d-block mt-1">
-                    <i class="bi bi-clock me-1"></i>{{ event.date | date:'EEE, MMM d' }}
-                  </small>
-                </div>
-                
-                <!-- Action Button -->
-                <button class="btn btn-sm btn-link text-teal" 
-                        (click)="openEventDetailModal(eventDetailModal, event)">
-                  <i class="bi bi-chevron-right"></i>
-                </button>
               </div>
-            }
-          } @else {
+
+              <!-- Event Info -->
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <span class="event-icon-small">{{ getEventIcon(event.type) }}</span>
+                  <span class="badge"
+                  [ngClass]="'badge-' + getEventColor(event.type)">
+              {{ event.type }}
+            </span>
+
+                </div>
+
+                <!-- Employee Name or Title -->
+                <h6 class="mb-0 fw-semibold"
+                    *ngIf="event.employeeName; else upcomingTitle">
+                  {{ event.employeeName }}
+                </h6>
+
+                <small class="text-muted" *ngIf="event.employeeName">
+                  {{ event.department }}
+                </small>
+
+                <ng-template #upcomingTitle>
+                  <h6 class="mb-0 fw-semibold">{{ event.title }}</h6>
+                </ng-template>
+
+                <!-- Date -->
+                <small class="text-muted d-block mt-1">
+                  <i class="bi bi-clock me-1"></i>
+                  {{ event.date | date:'EEE, MMM d' }}
+                </small>
+              </div>
+
+              <!-- Detail Button -->
+              <button class="btn btn-sm btn-link text-primary-600"
+                      (click)="openEventDetailModal(eventDetailModal, event)">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+
+            </div>
+
+            <!-- Show More / Show Less Button -->
+            <button *ngIf="upcomingEvents().length > 7"
+                    class="btn btn-sm btn-outline-primary w-100 mt-2"
+                    (click)="showAllUpcoming = !showAllUpcoming">
+              {{ showAllUpcoming ? 'Show Less ▲' : 'Show More ▼' }}
+            </button>
+
+          </ng-container>
+
+          <!-- No Events -->
+          <ng-template #noUpcoming>
             <div class="text-center py-4">
               <i class="bi bi-emoji-smile fs-1 text-muted"></i>
               <p class="text-muted mt-3 mb-0">No upcoming celebrations</p>
             </div>
-          }
-          
+          </ng-template>
+
+          <!-- View Calendar Button -->
           <div class="mt-3">
-            <button class="btn btn-outline-teal w-100" (click)="changeView('month')">
+            <button class="btn btn-outline-primary w-100" (click)="changeView('month')">
               <i class="bi bi-calendar-check me-2"></i>View Full Calendar
             </button>
           </div>
+
         </div>
       </div>
     </div>
@@ -396,64 +415,49 @@
 <!-- Add/Edit Event Modal -->
 <ng-template #eventModal let-modal>
   <div class="modal-header border-0 pb-0">
-    <h5 class="modal-title fw-bold text-teal-800">
+    <h5 class="modal-title fw-bold text-white">
       <i class="bi {{ isEditMode ? 'bi-pencil-square' : 'bi-plus-circle' }} me-2"></i>
       {{ isEditMode ? 'Edit Celebration Event' : 'Add Celebration Event' }}
     </h5>
-    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body pt-3">
     <form [formGroup]="eventForm">
       <div class="row g-3">
-        <!-- Event Title -->
         <div class="col-12">
           <label class="form-label fw-semibold">Event Title</label>
-          <input type="text" class="form-control" formControlName="title" 
-                 placeholder="e.g., John's Birthday">
-          @if (eventForm.get('title')?.invalid && eventForm.get('title')?.touched) {
-            <div class="text-danger small mt-1">Title is required</div>
-          }
+          <input type="text" class="form-control" formControlName="title" placeholder="e.g., John's Birthday">
+          <div class="text-danger small mt-1" *ngIf="eventForm.get('title')?.invalid && eventForm.get('title')?.touched">Title is required</div>
         </div>
-        
-        <!-- Event Type & Date -->
         <div class="col-md-6">
           <label class="form-label fw-semibold">Event Type</label>
           <select class="form-select" formControlName="type">
             <option value="">Select Type</option>
-            @for (type of eventTypes; track type.value) {
-              <option [value]="type.value">{{ type.icon }} {{ type.label }}</option>
-            }
+            <option *ngFor="let type of eventTypes; trackBy: trackByEventType" [value]="type.value">
+              {{ type.icon }} {{ type.label }}
+            </option>
           </select>
         </div>
-        
         <div class="col-md-6">
           <label class="form-label fw-semibold">Event Date</label>
           <input type="date" class="form-control" formControlName="date">
         </div>
-        
-        <!-- Employee Details (Conditional) -->
         <div class="col-md-6">
           <label class="form-label fw-semibold">Employee Name</label>
-          <input type="text" class="form-control" formControlName="employeeName" 
-                 placeholder="Full name">
+          <input type="text" class="form-control" formControlName="employeeName" placeholder="Full name">
         </div>
-        
         <div class="col-md-6">
           <label class="form-label fw-semibold">Department</label>
-          <input type="text" class="form-control" formControlName="department" 
-                 placeholder="Department">
+          <input type="text" class="form-control" formControlName="department" placeholder="Department">
         </div>
-        
-        <!-- Description -->
         <div class="col-12">
           <label class="form-label fw-semibold">Description</label>
-          <textarea class="form-control" formControlName="description" rows="3" 
-                    placeholder="Event description..."></textarea>
+          <textarea class="form-control" formControlName="description" rows="3" placeholder="Event description..."></textarea>
         </div>
-        
-        <!-- Hidden Employee ID -->
         <input type="hidden" formControlName="employeeId">
         <input type="hidden" formControlName="id">
+        <input type="hidden" formControlName="profileImage">
+        <input type="hidden" formControlName="color">
       </div>
     </form>
   </div>
@@ -461,14 +465,11 @@
     <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">
       <i class="bi bi-x-lg me-2"></i>Cancel
     </button>
-    @if (isEditMode) {
-      <button type="button" class="btn btn-danger" 
-              (click)="deleteEvent(eventForm.get('id')?.value); modal.dismiss()">
-        <i class="bi bi-trash me-2"></i>Delete
-      </button>
-    }
-    <button type="button" class="btn btn-teal" 
-            (click)="saveEvent()" [disabled]="eventForm.invalid">
+    <button *ngIf="isEditMode" type="button" class="btn btn-danger" 
+            (click)="deleteEvent(eventForm.get('id')?.value); modal.dismiss()">
+      <i class="bi bi-trash me-2"></i>Delete
+    </button>
+    <button type="button" class="btn btn-primary-gradient" (click)="saveEvent()" [disabled]="eventForm.invalid">
       <i class="bi {{ isEditMode ? 'bi-check-lg' : 'bi-plus-circle' }} me-2"></i>
       {{ isEditMode ? 'Update Event' : 'Save Event' }}
     </button>
@@ -477,44 +478,46 @@
 
 <!-- Event Detail Modal -->
 <ng-template #eventDetailModal let-modal>
-  @if (selectedEvent()) {
+  <ng-container *ngIf="selectedEvent()">
     <div class="modal-header border-0 pb-0">
       <div class="d-flex align-items-center">
-        <div class="event-icon-large me-3" [class]="'bg-' + getEventColor(selectedEvent()?.type || '') + '-soft'">
+        <div class="event-icon-large me-3" [ngClass]="'bg-' + getEventColor(selectedEvent()?.type || '') + '-soft'">
           <span class="fs-2">{{ getEventIcon(selectedEvent()?.type || '') }}</span>
         </div>
         <div>
-          <h5 class="modal-title fw-bold">{{ selectedEvent()?.title }}</h5>
-          <span class="badge" [class]="'bg-' + getEventColor(selectedEvent()?.type || '')">
+          <h5 class="modal-title fw-bold text-white">{{ selectedEvent()?.title }}</h5>
+          <span class="badge" [ngClass]="'badge-' + getEventColor(selectedEvent()?.type || '')">
             {{ selectedEvent()?.type }}
           </span>
         </div>
       </div>
-      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+      <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="modal.dismiss()"></button>
     </div>
-    
     <div class="modal-body">
-      <!-- Employee Information -->
-      @if (selectedEvent()?.employeeName) {
+      <ng-container *ngIf="selectedEvent()?.employeeName">
         <div class="employee-detail-card bg-light rounded-4 p-4 mb-4">
           <div class="d-flex align-items-center">
-            <div class="employee-avatar-large bg-teal-soft rounded-circle me-3">
-              {{ getInitials(selectedEvent()?.employeeName || '') }}
-            </div>
+            <ng-container *ngIf="selectedEvent()?.profileImage; else detailInitials">
+              <img [src]="selectedEvent()?.profileImage" class="employee-avatar-large rounded-circle me-3" 
+                   alt="{{ selectedEvent()?.employeeName }}">
+            </ng-container>
+            <ng-template #detailInitials>
+              <div class="employee-avatar-large bg-primary-soft rounded-circle me-3">
+                {{ getInitials(selectedEvent()?.employeeName || '') }}
+              </div>
+            </ng-template>
             <div>
               <h4 class="mb-1 fw-bold">{{ selectedEvent()?.employeeName }}</h4>
               <p class="text-muted mb-0">{{ selectedEvent()?.department }}</p>
               <p class="mb-0 mt-1">
-                <span class="badge bg-teal-soft text-teal-800">
+                <span class="badge bg-primary-soft text-primary-700">
                   Employee ID: {{ selectedEvent()?.employeeId }}
                 </span>
               </p>
             </div>
           </div>
         </div>
-      }
-      
-      <!-- Event Details -->
+      </ng-container>
       <div class="event-details">
         <div class="row g-3">
           <div class="col-md-6">
@@ -523,34 +526,82 @@
               <strong>{{ selectedEvent()?.date | date:'EEEE, MMMM d, y' }}</strong>
             </div>
           </div>
-          
           <div class="col-md-6">
             <div class="detail-item">
               <small class="text-muted d-block">Time</small>
               <strong>All Day Event</strong>
             </div>
           </div>
-          
-          @if (selectedEvent()?.description) {
+          <ng-container *ngIf="selectedEvent()?.description">
             <div class="col-12 mt-3">
               <div class="detail-item">
                 <small class="text-muted d-block">Description</small>
                 <p class="mb-0">{{ selectedEvent()?.description }}</p>
               </div>
             </div>
-          }
+          </ng-container>
         </div>
       </div>
     </div>
-    
     <div class="modal-footer border-0">
       <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">
         <i class="bi bi-x-lg me-2"></i>Close
       </button>
-      <button type="button" class="btn btn-outline-teal" 
+      <button type="button" class="btn btn-outline-primary" 
               (click)="modal.dismiss(); openEditEventModal(eventModal, selectedEvent()!)">
         <i class="bi bi-pencil me-2"></i>Edit Event
       </button>
     </div>
-  }
+  </ng-container>
+</ng-template>
+
+<!-- Day Events Modal -->
+<ng-template #dayEventsModal let-modal>
+  <div class="modal-header border-0 pb-0">
+    <h5 class="modal-title fw-bold text-white">
+      <i class="bi bi-calendar-day me-2"></i>
+      Events for {{ selectedDate() | date:'fullDate' }}
+    </h5>
+    <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body pt-3">
+    <div class="list-group list-group-flush" *ngIf="selectedDayEvents().length > 0">
+      <div *ngFor="let event of selectedDayEvents(); trackBy: trackByEventId" class="list-group-item px-0 border-0 mb-3">
+        <div class="d-flex align-items-center">
+          <ng-container *ngIf="event.employeeName">
+            <ng-container *ngIf="event.profileImage; else dayListInitials">
+              <img [src]="event.profileImage" class="event-avatar me-3 rounded-circle" 
+                   alt="{{ event.employeeName }}" style="width: 40px; height: 40px; object-fit: cover;">
+            </ng-container>
+            <ng-template #dayListInitials>
+              <div class="event-avatar me-3 bg-primary-soft">
+                {{ getInitials(event.employeeName) }}
+              </div>
+            </ng-template>
+          </ng-container>
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="badge" [ngClass]="'badge-' + getEventColor(event.type)">
+                {{ getEventIcon(event.type) }} {{ event.type }}
+              </span>
+            </div>
+            <h6 class="mb-1 fw-semibold">{{ event.title }}</h6>
+            <small class="text-muted d-block" *ngIf="event.employeeName">
+              {{ event.employeeName }} • {{ event.department }}
+            </small>
+          </div>
+          <button class="btn btn-sm btn-outline-primary ms-2" 
+                  (click)="modal.dismiss(); openEventDetailModal(eventDetailModal, event)">
+            <i class="bi bi-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer border-0">
+    <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">
+      Close
+    </button>
+    
+  </div>
 </ng-template>

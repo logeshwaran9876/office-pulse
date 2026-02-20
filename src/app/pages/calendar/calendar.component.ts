@@ -1,30 +1,56 @@
-import { Component, OnInit, inject, signal, ViewChild, TemplateRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, inject, signal, ViewChild, TemplateRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { NgbModal, NgbDropdownModule, NgbTooltipModule, NgbPopoverModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { NgbModal, NgbDropdownModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink } from '@angular/router';
+import { Subject } from 'rxjs';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  switchMap,
+  takeUntil,
+  finalize
+} from 'rxjs/operators';
+
 
 // Services
-import { EmployeeService } from '../../services/employee.service';
+import { CalendarApiService } from '../../services/calendar.service';
 
-// Models - FIXED: Removed CalendarEvent import
-import { CelebrationEvent, CalendarView, CalendarDay, YearMonth } from '../../models/calendar.model';
-import { Employee } from '../../models/employee.model';
+// Models
+import { CelebrationEvent, CalendarView, CalendarDay, YearMonth, EventType } from '../../models/calendar.model';
+
+
 
 @Component({
   selector: 'app-calendar',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    NgbDropdownModule,
+    RouterLink
+  ],
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.css']
 })
-export class CalendarComponent implements OnInit, AfterViewInit {
-  private employeeService = inject(EmployeeService);
+export class CalendarComponent implements OnInit, OnDestroy {
+  private calendarApi = inject(CalendarApiService);
   private modalService = inject(NgbModal);
   private fb = inject(FormBuilder);
+  private destroy$ = new Subject<void>();
 
-  // FIXED: ViewChild with correct TemplateRef type
   @ViewChild('eventModal') eventModal!: TemplateRef<any>;
   @ViewChild('eventDetailModal') eventDetailModal!: TemplateRef<any>;
   @ViewChild('dayEventsModal') dayEventsModal!: TemplateRef<any>;
+
+  // Loading States
+  isLoadingMonth = false;
+  isLoadingUpcoming = false;
+  isLoadingDay = false;
+  isSearching = false;
+showAllUpcoming = false;
 
   // Calendar State
   currentDate = new Date();
@@ -32,28 +58,32 @@ export class CalendarComponent implements OnInit, AfterViewInit {
   currentYear = new Date().getFullYear();
   currentView: CalendarView = 'month';
   calendarDays: CalendarDay[] = [];
-  yearMonths: YearMonth[] = []; // FIXED: Separate variable for year view
+  yearMonths: YearMonth[] = [];
   weekDays: string[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   monthNames: string[] = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
+  // Month indexes for iteration
+  monthIndexes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
   // Events Data
   private allEvents = signal<CelebrationEvent[]>([]);
   filteredEvents = signal<CelebrationEvent[]>([]);
-  selectedDate = signal<Date | null>(null);
-  selectedEvent = signal<CelebrationEvent | null>(null);
-  selectedDayEvents = signal<CelebrationEvent[]>([]); // FIXED: For day with multiple events
-  selectedEmployee = signal<Employee | null>(null);
-
-  // Upcoming Events
   upcomingEvents = signal<CelebrationEvent[]>([]);
+  selectedDate = signal<Date | undefined>(undefined);
+  selectedEvent = signal<CelebrationEvent | null>(null);
+  selectedDayEvents = signal<CelebrationEvent[]>([]);
 
   // Filters
   searchTerm = '';
   selectedFilterTypes: string[] = [];
-  eventTypes = [
+  private searchSubject = new Subject<string>();
+  private filterSubject = new Subject<string>();
+
+  // Event Types
+  eventTypes: EventType[] = [
     { value: 'birthday', label: 'Birthday', icon: '🎂', color: 'primary' },
     { value: 'wedding', label: 'Wedding Anniversary', icon: '💍', color: 'danger' },
     { value: 'work', label: 'Work Anniversary', icon: '🕯️', color: 'warning' },
@@ -79,18 +109,225 @@ export class CalendarComponent implements OnInit, AfterViewInit {
       profileImage: [''],
       color: ['primary']
     });
+
+    // Setup search debounce
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(term => {
+        if (!term.trim()) {
+          this.loadMonthEvents();
+          return [];
+        }
+        this.isSearching = true;
+        return this.calendarApi.searchEvents(term).pipe(
+          finalize(() => this.isSearching = false)
+        );
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe(events => {
+      this.allEvents.set(events);
+      this.filteredEvents.set(events);
+      this.refreshCurrentView();
+      this.loadUpcomingEvents();
+    });
+
+    // Setup filter debounce
+    this.filterSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(type => {
+        this.isSearching = true;
+        if (!type) {
+          this.loadMonthEvents();
+          return [];
+        }
+        return this.calendarApi.filterEvents(type).pipe(
+          finalize(() => this.isSearching = false)
+        );
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe(events => {
+      if (events && events.length > 0) {
+        this.allEvents.set(events);
+        this.filteredEvents.set(events);
+        this.refreshCurrentView();
+        this.loadUpcomingEvents();
+      }
+    });
   }
 
-  ngOnInit() {
-    this.loadEvents();
+  ngOnInit(): void {
+    this.loadMonthEvents();
+    this.loadUpcomingEvents();
   }
 
-  ngAfterViewInit() {
-    // Ensure modals are ready
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ============== API Calls ==============
+
+  loadMonthEvents(): void {
+    this.isLoadingMonth = true;
+    
+    this.calendarApi.getMonthEvents(this.currentMonth + 1, this.currentYear)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.isLoadingMonth = false)
+      )
+      .subscribe({
+        next: (events) => {
+          this.allEvents.set(events);
+          this.filteredEvents.set(events);
+          this.generateCalendar();
+        },
+        error: (error) => {
+          console.error('Error loading month events:', error);
+          this.allEvents.set([]);
+          this.filteredEvents.set([]);
+          this.generateCalendar();
+        }
+      });
+  }
+
+  loadUpcomingEvents(): void {
+    this.isLoadingUpcoming = true;
+    
+    this.calendarApi.getUpcomingEvents(10)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.isLoadingUpcoming = false)
+      )
+      .subscribe({
+        next: (events) => {
+          this.upcomingEvents.set(events);
+        },
+        error: (error) => {
+          console.error('Error loading upcoming events:', error);
+          this.upcomingEvents.set([]);
+        }
+      });
+  }
+
+  loadDayEvents(date: Date): void {
+    this.isLoadingDay = true;
+    
+    this.calendarApi.getDayEvents(date)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.isLoadingDay = false)
+      )
+      .subscribe({
+        next: (events) => {
+          this.selectedDayEvents.set(events);
+          
+          // Update events for this day in the calendar
+          this.updateEventsForDate(date, events);
+        },
+        error: (error) => {
+          console.error('Error loading day events:', error);
+          this.selectedDayEvents.set([]);
+        }
+      });
+  }
+
+  // ============== Filter Methods ==============
+
+  /**
+   * Apply all active filters to events
+   */
+  applyFilters(): void {
+    let filtered = this.allEvents();
+
+    // Apply search filter
+    if (this.searchTerm.trim()) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(event => 
+        event.title.toLowerCase().includes(term) ||
+        (event.employeeName?.toLowerCase().includes(term) ?? false) ||
+        (event.department?.toLowerCase().includes(term) ?? false) ||
+        (event.description?.toLowerCase().includes(term) ?? false)
+      );
+    }
+
+    // Apply type filters
+    if (this.selectedFilterTypes.length > 0) {
+      filtered = filtered.filter(event => 
+        this.selectedFilterTypes.includes(event.type)
+      );
+    }
+
+    this.filteredEvents.set(filtered);
+    this.refreshCurrentView();
+    this.loadUpcomingEvents();
+  }
+
+  /**
+   * Handle search input
+   */
+  onSearchInput(): void {
+    if (this.searchTerm.trim()) {
+      // Use debounced search for API calls
+      this.searchSubject.next(this.searchTerm);
+    } else {
+      // If search is cleared, reload from API
+      this.loadMonthEvents();
+    }
+  }
+
+  /**
+   * Toggle filter type
+   */
+  toggleFilter(type: string): void {
+    const index = this.selectedFilterTypes.indexOf(type);
+    if (index === -1) {
+      this.selectedFilterTypes.push(type);
+    } else {
+      this.selectedFilterTypes.splice(index, 1);
+    }
+    
+    // Apply filters locally
+    this.applyFilters();
+    
+    // Also trigger API filter if only one type is selected
+    if (this.selectedFilterTypes.length === 1) {
+      this.filterSubject.next(this.selectedFilterTypes[0]);
+    } else if (this.selectedFilterTypes.length === 0) {
+      this.filterSubject.next('');
+    }
+  }
+
+  /**
+   * Clear all filters
+   */
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.selectedFilterTypes = [];
+    this.filteredEvents.set(this.allEvents());
+    this.refreshCurrentView();
+    this.loadUpcomingEvents();
+    this.filterSubject.next('');
+  }
+
+  /**
+   * Filter by specific type (for dropdown menu)
+   */
+  filterByType(type: string): void {
+    if (!type) {
+      this.clearFilters();
+      return;
+    }
+    
+    this.selectedFilterTypes = [type];
+    this.applyFilters();
+    this.filterSubject.next(type);
   }
 
   // ============== Calendar Generation ==============
-  generateCalendar() {
+
+  generateCalendar(): void {
     const firstDay = new Date(this.currentYear, this.currentMonth, 1);
     const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
     const startingDayOfWeek = firstDay.getDay();
@@ -141,27 +378,50 @@ export class CalendarComponent implements OnInit, AfterViewInit {
   }
 
   getEventsForDate(date: Date): CelebrationEvent[] {
-    return this.filteredEvents().filter(event  => {
+    return this.filteredEvents().filter(event => {
       const eventDate = new Date(event.date);
       return eventDate.toDateString() === date.toDateString();
     });
   }
 
-  // ============== View Navigation ==============
-  changeView(view: CalendarView) {
-    this.currentView = view;
-    if (view === 'month') {
+  updateEventsForDate(date: Date, events: CelebrationEvent[]): void {
+    // Update the events in the current filtered list
+    const otherEvents = this.filteredEvents().filter(event => {
+      const eventDate = new Date(event.date);
+      return eventDate.toDateString() !== date.toDateString();
+    });
+    
+    this.filteredEvents.set([...otherEvents, ...events]);
+    
+    // Update the calendar days
+    this.calendarDays = this.calendarDays.map(day => {
+      if (day.date.toDateString() === date.toDateString()) {
+        return { ...day, events };
+      }
+      return day;
+    });
+  }
+
+  refreshCurrentView(): void {
+    if (this.currentView === 'month') {
       this.generateCalendar();
-    } else if (view === 'week') {
+    } else if (this.currentView === 'week') {
       this.generateWeekView();
-    } else if (view === 'day') {
+    } else if (this.currentView === 'day') {
       this.generateDayView();
-    } else if (view === 'year') {
+    } else if (this.currentView === 'year') {
       this.generateYearView();
     }
   }
 
-  generateWeekView() {
+  // ============== View Navigation ==============
+
+  changeView(view: CalendarView): void {
+    this.currentView = view;
+    this.refreshCurrentView();
+  }
+
+  generateWeekView(): void {
     const startOfWeek = new Date(this.currentDate);
     startOfWeek.setDate(this.currentDate.getDate() - this.currentDate.getDay());
     
@@ -172,6 +432,9 @@ export class CalendarComponent implements OnInit, AfterViewInit {
       days.push({
         day: date.getDate(),
         date,
+        dayName: this.weekDays[date.getDay()],
+        monthName: this.monthNames[date.getMonth()],
+        year: date.getFullYear(),
         isCurrentMonth: date.getMonth() === this.currentMonth,
         isToday: this.isToday(date),
         events: this.getEventsForDate(date)
@@ -181,10 +444,13 @@ export class CalendarComponent implements OnInit, AfterViewInit {
     this.calendarDays = days;
   }
 
-  generateDayView() {
+  generateDayView(): void {
     const days: CalendarDay[] = [{
       day: this.currentDate.getDate(),
       date: this.currentDate,
+      dayName: this.weekDays[this.currentDate.getDay()],
+      monthName: this.monthNames[this.currentDate.getMonth()],
+      year: this.currentDate.getFullYear(),
       isCurrentMonth: true,
       isToday: true,
       events: this.getEventsForDate(this.currentDate)
@@ -192,27 +458,23 @@ export class CalendarComponent implements OnInit, AfterViewInit {
     this.calendarDays = days;
   }
 
-  generateYearView() {
+  generateYearView(): void {
     const months: YearMonth[] = [];
     for (let month = 0; month < 12; month++) {
       months.push({
         month,
         monthName: this.monthNames[month],
         year: this.currentYear,
-        events: this.getEventsForMonth(month)
+        events: this.filteredEvents().filter(event => {
+          const eventDate = new Date(event.date);
+          return eventDate.getMonth() === month && eventDate.getFullYear() === this.currentYear;
+        })
       });
     }
     this.yearMonths = months;
   }
 
-  getEventsForMonth(month: number): CelebrationEvent[] {
-    return this.filteredEvents().filter(event => {
-      const eventDate = new Date(event.date);
-      return eventDate.getMonth() === month && eventDate.getFullYear() === this.currentYear;
-    });
-  }
-
-  previousPeriod() {
+  previousPeriod(): void {
     if (this.currentView === 'month') {
       if (this.currentMonth === 0) {
         this.currentMonth = 11;
@@ -221,7 +483,7 @@ export class CalendarComponent implements OnInit, AfterViewInit {
         this.currentMonth--;
       }
       this.currentDate = new Date(this.currentYear, this.currentMonth, 1);
-      this.generateCalendar();
+      this.loadMonthEvents();
     } else if (this.currentView === 'week') {
       this.currentDate.setDate(this.currentDate.getDate() - 7);
       this.generateWeekView();
@@ -234,7 +496,7 @@ export class CalendarComponent implements OnInit, AfterViewInit {
     }
   }
 
-  nextPeriod() {
+  nextPeriod(): void {
     if (this.currentView === 'month') {
       if (this.currentMonth === 11) {
         this.currentMonth = 0;
@@ -243,7 +505,7 @@ export class CalendarComponent implements OnInit, AfterViewInit {
         this.currentMonth++;
       }
       this.currentDate = new Date(this.currentYear, this.currentMonth, 1);
-      this.generateCalendar();
+      this.loadMonthEvents();
     } else if (this.currentView === 'week') {
       this.currentDate.setDate(this.currentDate.getDate() + 7);
       this.generateWeekView();
@@ -256,13 +518,13 @@ export class CalendarComponent implements OnInit, AfterViewInit {
     }
   }
 
-  goToToday() {
+  goToToday(): void {
     this.currentDate = new Date();
     this.currentMonth = this.currentDate.getMonth();
     this.currentYear = this.currentDate.getFullYear();
     
     if (this.currentView === 'month') {
-      this.generateCalendar();
+      this.loadMonthEvents();
     } else if (this.currentView === 'week') {
       this.generateWeekView();
     } else if (this.currentView === 'day') {
@@ -277,166 +539,39 @@ export class CalendarComponent implements OnInit, AfterViewInit {
     return date.toDateString() === today.toDateString();
   }
 
-  // ============== Event Management ==============
-  loadEvents() {
-    // Mock data with profile images
-    const mockEvents: CelebrationEvent[] = [
-      {
-        id: '1',
-        title: 'Karthi Kumar - Birthday',
-        type: 'birthday',
-        date: new Date(2026, 1, 14),
-        employeeId: 'EMP-001',
-        employeeName: 'Karthi Kumar',
-        department: 'Engineering',
-        profileImage: 'https://ui-avatars.com/api/?name=Karthi+Kumar&background=2c7a7b&color=fff',
-        description: '35th Birthday Celebration'
-      },
-      {
-        id: '2',
-        title: 'Priya Sharma - Wedding Anniversary',
-        type: 'wedding',
-        date: new Date(2026, 1, 14),
-        employeeId: 'EMP-002',
-        employeeName: 'Priya Sharma',
-        department: 'Marketing',
-        profileImage: 'https://ui-avatars.com/api/?name=Priya+Sharma&background=2c7a7b&color=fff',
-        description: '5th Wedding Anniversary'
-      },
-      {
-        id: '3',
-        title: 'Rajan Iyer - Work Anniversary',
-        type: 'work',
-        date: new Date(2026, 1, 15),
-        employeeId: 'EMP-003',
-        employeeName: 'Rajan Iyer',
-        department: 'Engineering',
-        profileImage: 'https://ui-avatars.com/api/?name=Rajan+Iyer&background=2c7a7b&color=fff',
-        description: '10 Years of Service'
-      },
-      {
-        id: '4',
-        title: 'Employee of the Month',
-        type: 'achievement',
-        date: new Date(2026, 1, 16),
-        employeeId: 'EMP-004',
-        employeeName: 'Divya Krishnan',
-        department: 'Sales',
-        profileImage: 'https://ui-avatars.com/api/?name=Divya+Krishnan&background=2c7a7b&color=fff',
-        description: 'Best Performance - January 2026'
-      },
-      {
-        id: '5',
-        title: 'Office Party',
-        type: 'event',
-        date: new Date(2026, 1, 20),
-        description: 'Year-end Celebration'
-      }
-    ];
-    
-    this.allEvents.set(mockEvents);
-    this.filteredEvents.set(mockEvents);
-    
-    // FIXED: Generate calendar AFTER events are set
-    this.generateCalendar();
-    this.loadUpcomingEvents();
-    this.generateYearView();
-  }
-
-  loadUpcomingEvents() {
-    const upcoming = this.filteredEvents()
-      .filter(event => new Date(event.date) >= new Date())
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(0, 5);
-    this.upcomingEvents.set(upcoming);
-  }
-
-  // ============== Filters ==============
-  toggleFilter(type: string) {
-    const index = this.selectedFilterTypes.indexOf(type);
-    if (index === -1) {
-      this.selectedFilterTypes.push(type);
-    } else {
-      this.selectedFilterTypes.splice(index, 1);
-    }
-    this.applyFilters();
-  }
-
-  applyFilters() {
-    let filtered = this.allEvents();
-
-    // Filter by search term
-    if (this.searchTerm.trim()) {
-      const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(event => 
-        event.title.toLowerCase().includes(term) ||
-        event.employeeName?.toLowerCase().includes(term) ||
-        event.department?.toLowerCase().includes(term) ||
-        false
-      );
-    }
-
-    // Filter by event types
-    if (this.selectedFilterTypes.length > 0) {
-      filtered = filtered.filter(event => 
-        this.selectedFilterTypes.includes(event.type)
-      );
-    }
-
-    this.filteredEvents.set(filtered);
-    
-    // FIXED: Regenerate views after filtering
-    if (this.currentView === 'month') {
-      this.generateCalendar();
-    } else if (this.currentView === 'week') {
-      this.generateWeekView();
-    } else if (this.currentView === 'day') {
-      this.generateDayView();
-    } else if (this.currentView === 'year') {
-      this.generateYearView();
-    }
-    
-    this.loadUpcomingEvents();
-  }
-
-  clearFilters() {
-    this.searchTerm = '';
-    this.selectedFilterTypes = [];
-    this.filteredEvents.set(this.allEvents());
-    
-    // FIXED: Regenerate views after clearing filters
-    if (this.currentView === 'month') {
-      this.generateCalendar();
-    } else if (this.currentView === 'week') {
-      this.generateWeekView();
-    } else if (this.currentView === 'day') {
-      this.generateDayView();
-    } else if (this.currentView === 'year') {
-      this.generateYearView();
-    }
-    
-    this.loadUpcomingEvents();
-  }
-
   // ============== Modal Operations ==============
-  openAddEventModal(content: TemplateRef<any>, date?: Date) {
+
+  onDateClick(date: Date): void {
+    this.loadDayEvents(date);
+    
+    const events = this.getEventsForDate(date);
+    if (events.length > 1) {
+      this.openDayEventsModal(this.dayEventsModal, date, events);
+    } else if (events.length === 1) {
+      this.openEventDetailModal(this.eventDetailModal, events[0]);
+    } else {
+      this.openAddEventModal(this.eventModal, date);
+    }
+  }
+
+  openAddEventModal(content: TemplateRef<any>, date?: Date): void {
     this.isEditMode = false;
     this.selectedDate.set(date || new Date());
     this.eventForm.reset({
       date: this.formatDate(date || new Date()),
       color: 'primary'
     });
-    this.activeModal = this.modalService.open(content, { size: 'lg', centered: true, backdrop: 'static' });
+    this.activeModal = this.modalService.open(content, { size: 'lg', centered: true });
   }
 
-  openEditEventModal(content: TemplateRef<any>, event: CelebrationEvent) {
+  openEditEventModal(content: TemplateRef<any>, event: CelebrationEvent): void {
     this.isEditMode = true;
     this.selectedEvent.set(event);
     this.eventForm.patchValue({
       id: event.id,
       title: event.title,
       type: event.type,
-      date: this.formatDate(event.date),
+      date: this.formatDate(new Date(event.date)),
       employeeId: event.employeeId,
       employeeName: event.employeeName,
       department: event.department,
@@ -444,113 +579,54 @@ export class CalendarComponent implements OnInit, AfterViewInit {
       profileImage: event.profileImage,
       color: event.color || 'primary'
     });
-    this.activeModal = this.modalService.open(content, { size: 'lg', centered: true, backdrop: 'static' });
+    this.activeModal = this.modalService.open(content, { size: 'lg', centered: true });
   }
 
-  // FIXED: Separate method for single event detail
-  openEventDetailModal(content: TemplateRef<any>, event: CelebrationEvent) {
+  openEventDetailModal(content: TemplateRef<any>, event: CelebrationEvent): void {
     this.selectedEvent.set(event);
     this.activeModal = this.modalService.open(content, { size: 'md', centered: true });
   }
 
-  // FIXED: New method for day with multiple events
-  openDayEventsModal(content: TemplateRef<any>, date: Date, events: CelebrationEvent[]) {
+  openDayEventsModal(content: TemplateRef<any>, date: Date, events: CelebrationEvent[]): void {
     this.selectedDate.set(date);
     this.selectedDayEvents.set(events);
     this.activeModal = this.modalService.open(content, { size: 'md', centered: true });
   }
 
-  onDateClick(date: Date) {
-    const events = this.getEventsForDate(date);
-    if (events.length > 1) {
-      // Multiple events - show day events modal
-      this.openDayEventsModal(this.dayEventsModal, date, events);
-    } else if (events.length === 1) {
-      // Single event - show event detail
-      this.openEventDetailModal(this.eventDetailModal, events[0]);
-    } else {
-      // No events - show add event modal
-      this.openAddEventModal(this.eventModal, date);
-    }
-  }
-
-  // FIXED: Date conversion properly handled
-  saveEvent() {
+  saveEvent(): void {
     if (this.eventForm.valid) {
-      const formValue = this.eventForm.value;
-      
-      // FIXED: Convert date string to Date object
-      const eventData = {
-        ...formValue,
-        date: new Date(formValue.date)
-      };
-      
-      if (this.isEditMode) {
-        // Update existing event
-        const updatedEvents = this.allEvents().map(event => 
-          event.id === eventData.id ? { ...event, ...eventData } : event
-        );
-        this.allEvents.set(updatedEvents);
-      } else {
-        // Add new event
-        const newEvent: CelebrationEvent = {
-          ...eventData,
-          id: `EVT-${Date.now()}`
-        };
-        this.allEvents.set([...this.allEvents(), newEvent]);
-      }
-      
-      // FIXED: Reset filtered events and refresh views
-      this.filteredEvents.set(this.allEvents());
+      // In a real app, you'd call API to save
+      // For now, just close modal
       this.modalService.dismissAll();
       this.activeModal = null;
-      
-      // Refresh all views
-      if (this.currentView === 'month') {
-        this.generateCalendar();
-      } else if (this.currentView === 'week') {
-        this.generateWeekView();
-      } else if (this.currentView === 'day') {
-        this.generateDayView();
-      } else if (this.currentView === 'year') {
-        this.generateYearView();
-      }
-      
-      this.loadUpcomingEvents();
       this.eventForm.reset();
-    }
-  }
-
-  deleteEvent(eventId: string) {
-    if (confirm('Are you sure you want to delete this event?')) {
-      const updatedEvents = this.allEvents().filter(event => event.id !== eventId);
-      this.allEvents.set(updatedEvents);
-      this.filteredEvents.set(updatedEvents);
-      this.modalService.dismissAll();
-      this.activeModal = null;
       
-      // Refresh all views
-      if (this.currentView === 'month') {
-        this.generateCalendar();
-      } else if (this.currentView === 'week') {
-        this.generateWeekView();
-      } else if (this.currentView === 'day') {
-        this.generateDayView();
-      } else if (this.currentView === 'year') {
-        this.generateYearView();
-      }
-      
+      // Reload events to reflect changes
+      this.loadMonthEvents();
       this.loadUpcomingEvents();
     }
   }
 
-  closeModal() {
+  deleteEvent(eventId: string): void {
+    if (confirm('Are you sure you want to delete this event?')) {
+      // In a real app, you'd call API to delete
+      this.modalService.dismissAll();
+      this.activeModal = null;
+      
+      // Reload events
+      this.loadMonthEvents();
+      this.loadUpcomingEvents();
+    }
+  }
+
+  closeModal(): void {
     this.modalService.dismissAll();
     this.activeModal = null;
     this.eventForm.reset();
   }
 
   // ============== Utility Functions ==============
+
   formatDate(date: Date): string {
     const d = new Date(date);
     const year = d.getFullYear();
@@ -578,14 +654,14 @@ export class CalendarComponent implements OnInit, AfterViewInit {
     return this.monthNames[month];
   }
 
-  // FIXED: Safe access to profile image
   getProfileImage(event: CelebrationEvent): string {
     if (event.profileImage) {
       return event.profileImage;
     }
-    // Fallback to avatar generator
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(event.employeeName || 'User')}&background=2c7a7b&color=fff`;
   }
+
+  // ============== TrackBy Functions ==============
 
   trackByEventId(index: number, event: CelebrationEvent): string {
     return event.id;
@@ -593,5 +669,20 @@ export class CalendarComponent implements OnInit, AfterViewInit {
 
   trackByDate(index: number, day: CalendarDay): string {
     return day.date.toISOString();
+  }
+
+  trackByEventType(index: number, type: EventType): string {
+    return type.value;
+  }
+
+  // ============== Safe Getters ==============
+
+  getYearMonth(month: number): YearMonth {
+    return this.yearMonths[month] || {
+      month,
+      monthName: this.monthNames[month],
+      year: this.currentYear,
+      events: []
+    };
   }
 }

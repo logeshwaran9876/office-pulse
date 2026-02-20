@@ -27,7 +27,7 @@
     <!-- Bottom Section -->
     <div *ngIf="!isCollapsed" class="position-absolute bottom-0 start-0 end-0 p-3 border-top">
       <div class="d-grid gap-2">
-        <button class="btn btn-outline-secondary btn-sm text-start">
+        <button class="btn btn-outline-secondary btn-sm text-start" (click)="logout()">
           <i class="bi bi-box-arrow-right me-2"></i> Logout
         </button>
       </div>
